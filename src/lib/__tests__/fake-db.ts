@@ -1,8 +1,9 @@
 /**
- * In-memory stand-in for the parts of the Prisma client used by the password
- * and account deletion flows. Interactive transactions run one at a time
- * (like rows locked by the conditional updates in MySQL) and roll back every
- * change when they throw.
+ * In-memory stand-in for the parts of the Prisma client used by the password,
+ * email change and account deletion flows. Interactive transactions run one at
+ * a time (like rows locked by the conditional updates in MySQL) and roll back
+ * every change when they throw. Emails compare case-insensitively, like the
+ * database collation.
  */
 
 export type UserRow = {
@@ -17,6 +18,26 @@ export type UserRow = {
 export type ResetTokenRow = {
   id: string;
   userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+  usedAt: Date | null;
+  createdAt: Date;
+};
+
+export type EmailChangeRequestRow = {
+  id: string;
+  userId: string;
+  newEmail: string;
+  tokenHash: string;
+  expiresAt: Date;
+  createdAt: Date;
+};
+
+export type EmailChangeUndoRow = {
+  id: string;
+  userId: string;
+  oldEmail: string;
+  newEmail: string;
   tokenHash: string;
   expiresAt: Date;
   usedAt: Date | null;
@@ -41,16 +62,21 @@ export type OwnedTable = (typeof OWNED_TABLES)[number];
 type State = {
   users: UserRow[];
   resetTokens: ResetTokenRow[];
+  emailChangeRequests: EmailChangeRequestRow[];
+  emailChangeUndos: EmailChangeUndoRow[];
 } & Record<OwnedTable, OwnedRow[]>;
 
 type UserWhere = { id?: string; email?: string };
 type TokenWhere = { id?: string; userId?: string; usedAt?: null };
+type UndoWhere = TokenWhere & { expiresAt?: { gt: Date } };
 
 let nextId = 1;
 function emptyState(): State {
   return {
     users: [],
     resetTokens: [],
+    emailChangeRequests: [],
+    emailChangeUndos: [],
     profiles: [],
     incomes: [],
     expenses: [],
@@ -66,6 +92,8 @@ function cloneState(source: State): State {
   return {
     users: source.users.map((user) => ({ ...user })),
     resetTokens: source.resetTokens.map((token) => ({ ...token })),
+    emailChangeRequests: source.emailChangeRequests.map((row) => ({ ...row })),
+    emailChangeUndos: source.emailChangeUndos.map((row) => ({ ...row })),
     profiles: source.profiles.map((row) => ({ ...row })),
     incomes: source.incomes.map((row) => ({ ...row })),
     expenses: source.expenses.map((row) => ({ ...row })),
@@ -79,20 +107,42 @@ function failIfRequested(operation: string) {
   }
 }
 
+function sameEmail(a: string, b: string): boolean {
+  return a.toLowerCase() === b.toLowerCase();
+}
+
 function findUser(where: UserWhere): UserRow | undefined {
   return state.users.find(
     (user) =>
       (where.id === undefined || user.id === where.id) &&
-      (where.email === undefined || user.email === where.email),
+      (where.email === undefined || sameEmail(user.email, where.email)),
   );
 }
 
-function tokenMatches(token: ResetTokenRow, where: TokenWhere): boolean {
+function tokenMatches(
+  token: { id: string; userId: string; usedAt: Date | null },
+  where: TokenWhere,
+): boolean {
   return (
     (where.id === undefined || token.id === where.id) &&
     (where.userId === undefined || token.userId === where.userId) &&
     (!("usedAt" in where) || token.usedAt === where.usedAt)
   );
+}
+
+function undoMatches(undo: EmailChangeUndoRow, where: UndoWhere): boolean {
+  return (
+    tokenMatches(undo, where) &&
+    (where.expiresAt === undefined ||
+      undo.expiresAt.getTime() > where.expiresAt.gt.getTime())
+  );
+}
+
+/** Mimics the error Prisma throws for a unique constraint violation. */
+function uniqueViolation(field: string): Error {
+  return Object.assign(new Error(`Unique constraint failed on ${field}`), {
+    code: "P2002",
+  });
 }
 
 /** `deleteMany({ where: { userId } })` for a table of user owned rows. */
@@ -118,6 +168,7 @@ const models = {
     }: {
       where: UserWhere;
       data: {
+        email?: string;
         passwordHash?: string;
         passwordChangedAt?: Date;
         sessionVersion?: { increment: number };
@@ -127,6 +178,13 @@ const models = {
       const user = findUser(where);
       if (!user) {
         throw new Error("User not found");
+      }
+      if (data.email !== undefined) {
+        const owner = findUser({ email: data.email });
+        if (owner && owner !== user) {
+          throw uniqueViolation("users.email");
+        }
+        user.email = data.email;
       }
       if (data.passwordHash !== undefined) {
         user.passwordHash = data.passwordHash;
@@ -148,6 +206,8 @@ const models = {
       // Rows still pointing at the user would violate a foreign key.
       const remaining = [
         ...state.resetTokens,
+        ...state.emailChangeRequests,
+        ...state.emailChangeUndos,
         ...OWNED_TABLES.flatMap((table) => state[table]),
       ].some((row) => row.userId === user.id);
       if (remaining) {
@@ -200,6 +260,104 @@ const models = {
         (token) => token.userId !== where.userId,
       );
       return { count: before - state.resetTokens.length };
+    },
+  },
+  emailChangeRequest: {
+    async findUnique({ where }: { where: { tokenHash: string } }) {
+      const request = state.emailChangeRequests.find(
+        (row) => row.tokenHash === where.tokenHash,
+      );
+      return request ? { ...request } : null;
+    },
+    async upsert({
+      where,
+      create,
+      update,
+    }: {
+      where: { userId: string };
+      create: {
+        userId: string;
+        newEmail: string;
+        tokenHash: string;
+        expiresAt: Date;
+      };
+      update: { newEmail: string; tokenHash: string; expiresAt: Date };
+    }) {
+      const existing = state.emailChangeRequests.find(
+        (row) => row.userId === where.userId,
+      );
+      if (existing) {
+        Object.assign(existing, update);
+        return { ...existing };
+      }
+      const request: EmailChangeRequestRow = {
+        id: `request-${nextId++}`,
+        createdAt: new Date(),
+        ...create,
+      };
+      state.emailChangeRequests.push(request);
+      return { ...request };
+    },
+    async deleteMany({ where }: { where: { id?: string; userId?: string } }) {
+      const before = state.emailChangeRequests.length;
+      state.emailChangeRequests = state.emailChangeRequests.filter(
+        (row) =>
+          !(
+            (where.id === undefined || row.id === where.id) &&
+            (where.userId === undefined || row.userId === where.userId)
+          ),
+      );
+      return { count: before - state.emailChangeRequests.length };
+    },
+  },
+  emailChangeUndo: {
+    async findUnique({ where }: { where: { tokenHash: string } }) {
+      const undo = state.emailChangeUndos.find(
+        (row) => row.tokenHash === where.tokenHash,
+      );
+      return undo ? { ...undo } : null;
+    },
+    async findFirst({ where }: { where: UndoWhere }) {
+      const undo = state.emailChangeUndos.find((row) =>
+        undoMatches(row, where),
+      );
+      return undo ? { ...undo } : null;
+    },
+    async create({
+      data,
+    }: {
+      data: Omit<EmailChangeUndoRow, "id" | "usedAt" | "createdAt">;
+    }) {
+      const undo: EmailChangeUndoRow = {
+        id: `undo-${nextId++}`,
+        usedAt: null,
+        createdAt: new Date(),
+        ...data,
+      };
+      state.emailChangeUndos.push(undo);
+      return { ...undo };
+    },
+    async updateMany({
+      where,
+      data,
+    }: {
+      where: TokenWhere;
+      data: { usedAt: Date };
+    }) {
+      const matches = state.emailChangeUndos.filter((row) =>
+        undoMatches(row, where),
+      );
+      for (const undo of matches) {
+        undo.usedAt = data.usedAt;
+      }
+      return { count: matches.length };
+    },
+    async deleteMany({ where }: { where: { userId: string } }) {
+      const before = state.emailChangeUndos.length;
+      state.emailChangeUndos = state.emailChangeUndos.filter(
+        (row) => row.userId !== where.userId,
+      );
+      return { count: before - state.emailChangeUndos.length };
     },
   },
   profile: ownedModel("profiles"),
@@ -276,6 +434,8 @@ export const fakeDb = {
 
     return {
       resetTokens: count(state.resetTokens),
+      emailChangeRequests: count(state.emailChangeRequests),
+      emailChangeUndos: count(state.emailChangeUndos),
       profiles: count(state.profiles),
       incomes: count(state.incomes),
       expenses: count(state.expenses),
@@ -290,5 +450,39 @@ export const fakeDb = {
     return state.resetTokens
       .filter((token) => token.userId === userId)
       .map((token) => ({ ...token }));
+  },
+  addEmailChangeRequest(
+    request: Omit<EmailChangeRequestRow, "id" | "createdAt">,
+  ) {
+    const row: EmailChangeRequestRow = {
+      id: `request-${nextId++}`,
+      createdAt: new Date(),
+      ...request,
+    };
+    state.emailChangeRequests.push(row);
+    return { ...row };
+  },
+  addEmailChangeUndo(
+    undo: Omit<EmailChangeUndoRow, "id" | "usedAt" | "createdAt">,
+  ) {
+    const row: EmailChangeUndoRow = {
+      id: `undo-${nextId++}`,
+      usedAt: null,
+      createdAt: new Date(),
+      ...undo,
+    };
+    state.emailChangeUndos.push(row);
+    return { ...row };
+  },
+  getEmailChangeRequest(userId: string) {
+    const request = state.emailChangeRequests.find(
+      (row) => row.userId === userId,
+    );
+    return request ? { ...request } : undefined;
+  },
+  getEmailChangeUndos(userId: string) {
+    return state.emailChangeUndos
+      .filter((undo) => undo.userId === userId)
+      .map((undo) => ({ ...undo }));
   },
 };

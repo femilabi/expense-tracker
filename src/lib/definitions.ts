@@ -128,3 +128,36 @@ export type DeleteAccountState =
       message?: string;
     }
   | undefined;
+
+export const ChangeEmailSchema = z.object({
+  // Trimmed and lowercased before the format check, so " New@Mail.com " works.
+  newEmail: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.email({ error: "Please enter a valid email." })),
+  currentPassword: z
+    .string()
+    .min(1, { error: "Please enter your current password." }),
+});
+
+export type ChangeEmailState =
+  | {
+      errors?: {
+        newEmail?: string[];
+        currentPassword?: string[];
+      };
+      message?: string;
+      tone?: "error" | "info";
+    }
+  | undefined;
+
+export const EmailChangeTokenSchema = z.object({
+  token: z.string().min(1, { error: "This link is invalid." }),
+});
+
+export type EmailChangeTokenState =
+  | {
+      message?: string;
+    }
+  | undefined;
