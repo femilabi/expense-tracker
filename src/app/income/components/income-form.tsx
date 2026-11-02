@@ -20,6 +20,7 @@ import { incomeSchema } from "../income-schema";
 import { toaster } from "../toaster";
 import { formatIncomeDate } from "../utils";
 import { COLORS } from "@/components/shared/colors";
+import { DatePickerField } from "@/components/shared/date-picker-field";
 import {
   controlStyles,
   errorTextStyles,
@@ -205,14 +206,13 @@ export function IncomeForm({
         </Field.Root>
 
         <Field.Root gap="2" invalid={Boolean(errors.incomeDate)}>
-          <Field.Label {...labelProps}>Date</Field.Label>
-          <Input
-            {...controlStyles}
-            type="date"
-            aria-label="Income date"
-            aria-required="true"
+          <DatePickerField
+            label="Date"
+            labelProps={labelProps}
             value={incomeDate}
-            onChange={(event) => setIncomeDate(event.target.value)}
+            onChange={setIncomeDate}
+            invalid={Boolean(errors.incomeDate)}
+            required
           />
           {errors.incomeDate ? (
             <Field.ErrorText {...errorTextStyles}>
