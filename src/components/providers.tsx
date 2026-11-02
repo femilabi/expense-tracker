@@ -1,51 +1,60 @@
 ﻿"use client";
 
 import { ChakraProvider } from "@chakra-ui/react";
-import createCache, { type EmotionCache } from "@emotion/cache";
-import { css } from "@emotion/react";
-import type { ReactNode } from "react";
+import createCache from "@emotion/cache";
+import { CacheProvider } from "@emotion/react";
+import { useServerInsertedHTML } from "next/navigation";
+import { useState, type ReactNode } from "react";
 
 import { system } from "@/lib/theme";
 
-const cache = createCache({ key: "chakra-globals" });
-type CacheSheet = Parameters<EmotionCache["insert"]>[2];
+function EmotionRegistry({ children }: { children: ReactNode }) {
+  const [{ cache, flush }] = useState(() => {
+    const cache = createCache({ key: "css" });
+    cache.compat = true;
 
-function hasLayerStyles(styles: (typeof system._global)[number]) {
-  return Object.values(styles).some(
-    (value) =>
-      value !== null &&
-      typeof value === "object" &&
-      Object.keys(value).length > 0,
-  );
+    const previousInsert = cache.insert;
+    let inserted: string[] = [];
+
+    cache.insert = (...args) => {
+      const serialized = args[1];
+      if (cache.inserted[serialized.name] === undefined) {
+        inserted.push(serialized.name);
+      }
+      return previousInsert(...args);
+    };
+
+    const flush = () => {
+      const names = inserted;
+      inserted = [];
+      return names;
+    };
+
+    return { cache, flush };
+  });
+
+  useServerInsertedHTML(() => {
+    const names = flush();
+    if (names.length === 0) {
+      return null;
+    }
+
+    const styles = names.map((name) => cache.inserted[name]).join("");
+    return (
+      <style
+        data-emotion={`${cache.key} ${names.join(" ")}`}
+        dangerouslySetInnerHTML={{ __html: styles }}
+      />
+    );
+  });
+
+  return <CacheProvider value={cache}>{children}</CacheProvider>;
 }
-
-const globalStyles = (() => {
-  let captured = "";
-  const sheet = {
-    insert: (rule: string) => {
-      captured += rule;
-    },
-  } as unknown as CacheSheet;
-
-  const synthesized = cache.insert(
-    "",
-    css([system.layers.atRule, ...system._global.filter(hasLayerStyles)]),
-    sheet,
-    false,
-  );
-
-  return typeof synthesized === "string" ? synthesized : captured;
-})();
 
 export default function Providers({ children }: { children: ReactNode }) {
   return (
-    <ChakraProvider value={system}>
-      <style
-        href="chakra-globals"
-        precedence="default"
-        dangerouslySetInnerHTML={{ __html: globalStyles }}
-      />
-      {children}
-    </ChakraProvider>
+    <EmotionRegistry>
+      <ChakraProvider value={system}>{children}</ChakraProvider>
+    </EmotionRegistry>
   );
 }

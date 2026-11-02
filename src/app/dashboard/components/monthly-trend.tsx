@@ -14,18 +14,18 @@ export function MonthlyTrendCard({ points }: MonthlyTrendProps) {
 
   return (
     <Box
-      bg="white"
+      bg="bg.panel"
       borderWidth="1px"
-      borderColor="brand.mist"
+      borderColor="border"
       borderRadius="2xl"
       boxShadow="sm"
       p={{ base: 5, md: 6 }}
     >
       <Flex align="baseline" justify="space-between" gap={4} mb={5}>
-        <Text fontSize="md" fontWeight="bold" color="brand.navy">
+        <Text fontSize="md" fontWeight="bold" color="fg">
           Cash flow
         </Text>
-        <Text fontSize="xs" color="brand.slate">
+        <Text fontSize="xs" color="fg.muted">
           Last {points.length} months
         </Text>
       </Flex>
@@ -47,7 +47,7 @@ export function MonthlyTrendCard({ points }: MonthlyTrendProps) {
                 h={`${(point.income / max) * 100}%`}
                 minH="4px"
                 borderRadius="md"
-                bg="brand.teal"
+                bg="brand.solid"
                 title={`Income ${point.income}`}
               />
               <Box
@@ -55,11 +55,11 @@ export function MonthlyTrendCard({ points }: MonthlyTrendProps) {
                 h={`${(point.expenses / max) * 100}%`}
                 minH="4px"
                 borderRadius="md"
-                bg="brand.gold"
+                bg="accent.solid"
                 title={`Expenses ${point.expenses}`}
               />
             </Flex>
-            <Text fontSize="xs" color="brand.slate">
+            <Text fontSize="xs" color="fg.muted">
               {point.label}
             </Text>
           </Flex>
@@ -68,14 +68,14 @@ export function MonthlyTrendCard({ points }: MonthlyTrendProps) {
 
       <Flex align="center" gap={4}>
         <Flex align="center" gap={2}>
-          <Box boxSize="2.5" borderRadius="full" bg="brand.teal" />
-          <Text fontSize="xs" color="brand.slate">
+          <Box boxSize="2.5" borderRadius="full" bg="brand.solid" />
+          <Text fontSize="xs" color="fg.muted">
             Income
           </Text>
         </Flex>
         <Flex align="center" gap={2}>
-          <Box boxSize="2.5" borderRadius="full" bg="brand.gold" />
-          <Text fontSize="xs" color="brand.slate">
+          <Box boxSize="2.5" borderRadius="full" bg="accent.solid" />
+          <Text fontSize="xs" color="fg.muted">
             Expenses
           </Text>
         </Flex>

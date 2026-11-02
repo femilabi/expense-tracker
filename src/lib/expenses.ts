@@ -22,7 +22,7 @@ interface ExpenseRow {
   expenseDate: Date;
 }
 
-function resolveCurrency(value: string | null | undefined): Currency {
+export function resolveCurrency(value: string | null | undefined): Currency {
   return isCurrency(value) ? value : "USD";
 }
 

@@ -1,10 +1,10 @@
-import type { IncomeInput } from "./income-schema";
 import type { IncomeFilters, IncomeRecord, IncomeSummary } from "./types";
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
   year: "numeric",
+  timeZone: "UTC",
 });
 
 export function formatIncomeDate(dateKey: string): string {
@@ -12,8 +12,7 @@ export function formatIncomeDate(dateKey: string): string {
 }
 
 export function parseIncomeDateKey(dateKey: string): Date {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  return new Date(year, month - 1, day);
+  return new Date(`${dateKey}T00:00:00.000Z`);
 }
 
 export function toIncomeDateKey(date: Date): string {
@@ -23,34 +22,11 @@ export function toIncomeDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export function createIncomeRecord(values: IncomeInput): IncomeRecord {
-  return {
-    id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    amount: Number(values.amount),
-    source: values.source,
-    description: values.description,
-    incomeDate: values.incomeDate,
-  };
-}
-
-export function updateIncomeRecord(
-  income: IncomeRecord,
-  values: IncomeInput,
-): IncomeRecord {
-  return {
-    ...income,
-    amount: Number(values.amount),
-    source: values.source,
-    description: values.description,
-    incomeDate: values.incomeDate,
-  };
-}
-
 function monthsBetween(date: Date, reference: Date): number {
   return (
-    (reference.getFullYear() - date.getFullYear()) * 12 +
-    reference.getMonth() -
-    date.getMonth()
+    (reference.getUTCFullYear() - date.getUTCFullYear()) * 12 +
+    reference.getUTCMonth() -
+    date.getUTCMonth()
   );
 }
 
@@ -77,7 +53,7 @@ export function summarizeIncomes(
       lastMonthTotal += income.amount;
     }
 
-    if (date.getFullYear() === referenceDate.getFullYear()) {
+    if (date.getUTCFullYear() === referenceDate.getUTCFullYear()) {
       yearTotal += income.amount;
     }
   }
@@ -121,7 +97,7 @@ export function filterAndSortIncomes(
       }
 
       if (filters.dateRange === "this-year") {
-        return date.getFullYear() === referenceDate.getFullYear();
+        return date.getUTCFullYear() === referenceDate.getUTCFullYear();
       }
 
       return true;

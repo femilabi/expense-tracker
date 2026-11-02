@@ -15,18 +15,18 @@ export function RecentExpensesCard({
 }: RecentExpensesProps) {
   return (
     <Box
-      bg="white"
+      bg="bg.panel"
       borderWidth="1px"
-      borderColor="brand.mist"
+      borderColor="border"
       borderRadius="2xl"
       boxShadow="sm"
       p={{ base: 5, md: 6 }}
     >
       <Flex align="baseline" justify="space-between" gap={4} mb={4}>
-        <Text fontSize="md" fontWeight="bold" color="brand.navy">
+        <Text fontSize="md" fontWeight="bold" color="fg">
           Recent transactions
         </Text>
-        <Text fontSize="xs" color="brand.slate">
+        <Text fontSize="xs" color="fg.muted">
           Latest activity
         </Text>
       </Flex>
@@ -44,7 +44,7 @@ export function RecentExpensesCard({
               py={3}
               borderTopWidth={index === 0 ? "1px" : "0"}
               borderBottomWidth="1px"
-              borderColor="brand.mist"
+              borderColor="border"
             >
               <Flex align="center" gap={3} minW={0}>
                 <Flex
@@ -62,15 +62,10 @@ export function RecentExpensesCard({
                 </Flex>
 
                 <Box minW={0}>
-                  <Text
-                    fontSize="sm"
-                    fontWeight="medium"
-                    color="brand.navy"
-                    truncate
-                  >
+                  <Text fontSize="sm" fontWeight="medium" color="fg" truncate>
                     {expense.description ?? expense.label}
                   </Text>
-                  <Text fontSize="xs" color="brand.slate">
+                  <Text fontSize="xs" color="fg.muted">
                     {expense.label} · {formatDate(expense.date)}
                   </Text>
                 </Box>
@@ -79,7 +74,7 @@ export function RecentExpensesCard({
               <Text
                 fontSize="sm"
                 fontWeight="semibold"
-                color="brand.navy"
+                color="fg"
                 whiteSpace="nowrap"
               >
                 −{formatCurrency(expense.amount, currency)}

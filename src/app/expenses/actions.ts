@@ -10,9 +10,9 @@ import type {
   ExpenseActionResult,
   ExpenseDeleteResult,
 } from "@/app/expenses/types";
-import { auth } from "@/auth";
 import { getAccountCurrency, toExpenseRecord } from "@/lib/expenses";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "@/lib/session";
 
 const EXPENSE_SELECT = {
   id: true,
@@ -30,7 +30,7 @@ function toExpenseDate(value: string): Date {
 }
 
 async function getCurrentUserId(): Promise<string | null> {
-  const session = await auth();
+  const session = await getServerSession();
   return session?.user?.id ?? null;
 }
 

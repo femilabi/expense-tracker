@@ -14,7 +14,7 @@ export default function AuthLayout({
       alignItems="center"
       justifyContent="center"
       overflow="hidden"
-      bg="brand.soft-white"
+      bg="bg.subtle"
       px={4}
       py={{ base: 10, sm: 16 }}
     >
@@ -24,7 +24,7 @@ export default function AuthLayout({
         left="-100px"
         boxSize="320px"
         borderRadius="full"
-        bg="brand.teal"
+        bg="brand.solid"
         opacity={0.1}
         filter="blur(90px)"
       />
@@ -34,7 +34,7 @@ export default function AuthLayout({
         right="-110px"
         boxSize="340px"
         borderRadius="full"
-        bg="brand.gold"
+        bg="accent.solid"
         opacity={0.12}
         filter="blur(100px)"
       />
@@ -44,17 +44,17 @@ export default function AuthLayout({
         w="full"
         maxW="sm"
         overflow="hidden"
-        bg="white"
+        bg="bg.panel"
         borderWidth="1px"
-        borderColor="brand.mist"
+        borderColor="border"
         borderRadius="2xl"
         boxShadow="lg"
       >
         <Box
           h="1.5"
           bgGradient="to-r"
-          gradientFrom="brand.teal"
-          gradientTo="brand.gold"
+          gradientFrom="brand.solid"
+          gradientTo="accent.solid"
         />
         <Box px={{ base: 6, sm: 8 }} py={8}>
           {children}

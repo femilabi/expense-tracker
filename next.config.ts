@@ -8,9 +8,6 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
-    resolveAlias: {
-      "@emotion/react": "./src/lib/emotion-react-shim.ts",
-    },
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],

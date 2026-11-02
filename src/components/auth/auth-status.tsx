@@ -27,20 +27,20 @@ export default async function AuthStatus() {
         <Button
           asChild
           {...buttonStyles}
-          bg="brand.teal"
-          color="white"
-          _hover={{ bg: "brand.teal", opacity: 0.9 }}
+          bg="brand.solid"
+          color="brand.contrast"
+          _hover={{ bg: "brand.hover" }}
         >
           <Link href="/signup">Get started</Link>
         </Button>
         <Button
           asChild
           {...buttonStyles}
-          bg="white"
-          color="brand.navy"
+          bg="bg.panel"
+          color="fg"
           borderWidth="1px"
-          borderColor="brand.mist"
-          _hover={{ bg: "brand.soft-white" }}
+          borderColor="border"
+          _hover={{ bg: "bg.subtle" }}
         >
           <Link href="/login">Log in</Link>
         </Button>
@@ -50,9 +50,9 @@ export default async function AuthStatus() {
 
   return (
     <Flex align="center" gap={4} direction={{ base: "column", sm: "row" }}>
-      <Text fontSize="sm" color="brand.slate">
+      <Text fontSize="sm" color="fg.muted">
         Signed in as{" "}
-        <Text as="span" fontWeight="semibold" color="brand.navy">
+        <Text as="span" fontWeight="semibold" color="fg">
           {session.user.name ?? session.user.email}
         </Text>
       </Text>
@@ -60,9 +60,9 @@ export default async function AuthStatus() {
         <Button
           asChild
           {...buttonStyles}
-          bg="brand.teal"
-          color="white"
-          _hover={{ bg: "brand.teal", opacity: 0.9 }}
+          bg="brand.solid"
+          color="brand.contrast"
+          _hover={{ bg: "brand.hover" }}
         >
           <Link href="/dashboard">Dashboard</Link>
         </Button>
@@ -70,11 +70,11 @@ export default async function AuthStatus() {
           <Button
             type="submit"
             {...buttonStyles}
-            bg="white"
-            color="brand.navy"
+            bg="bg.panel"
+            color="fg"
             borderWidth="1px"
-            borderColor="brand.mist"
-            _hover={{ bg: "brand.soft-white" }}
+            borderColor="border"
+            _hover={{ bg: "bg.subtle" }}
           >
             Sign out
           </Button>

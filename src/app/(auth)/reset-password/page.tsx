@@ -23,21 +23,21 @@ export default async function ResetPasswordPage({
   return (
     <Stack gap={6}>
       <Stack gap={1}>
-        <Heading as="h1" size="2xl" color="brand.navy">
+        <Heading as="h1" size="2xl" color="fg">
           Choose a new password
         </Heading>
-        <Text color="brand.slate" fontSize="sm">
+        <Text color="fg.muted" fontSize="sm">
           This link works once and expires after 15 minutes.
         </Text>
       </Stack>
 
       <ResetPasswordForm token={token} />
 
-      <Text color="brand.slate" fontSize="sm" textAlign="center">
+      <Text color="fg.muted" fontSize="sm" textAlign="center">
         Need a new link?{" "}
         <ChakraLink
           asChild
-          color="brand.teal"
+          color="brand.fg"
           fontWeight="medium"
           textDecoration="underline"
         >

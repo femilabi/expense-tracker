@@ -1,4 +1,11 @@
+import {
+  parseDateKey,
+  summarizeExpenses,
+  toLocalDateKey,
+} from "@/app/expenses/utils";
+import { parseIncomeDateKey, summarizeIncomes } from "@/app/income/utils";
 import { CATEGORY_BY_VALUE, type Category } from "@/lib/categories";
+import { resolveCurrency, toExpenseRecord } from "@/lib/expenses";
 import { formatShortMonth } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -8,9 +15,12 @@ const RECENT_LIMIT = 8;
 export interface DashboardSummary {
   currency: string;
   income: number;
+  incomeEntries: number;
   expenses: number;
-  net: number;
   transactions: number;
+  net: number;
+  /** Net savings as a percentage of income; null when there is no income. */
+  savingsRate: number | null;
 }
 
 export interface CategoryBreakdown {
@@ -44,6 +54,8 @@ export interface RecentExpense {
 }
 
 export interface DashboardData {
+  /** First day of the summarised month (UTC midnight). */
+  month: Date;
   summary: DashboardSummary;
   breakdown: CategoryBreakdown[];
   trend: MonthlyPoint[];
@@ -67,8 +79,11 @@ export async function getDashboardData(
   userId: string,
   now: Date = new Date(),
 ): Promise<DashboardData> {
-  const year = now.getUTCFullYear();
-  const month = now.getUTCMonth();
+  // Use the same reference date as the Income and Expenses pages (the server's
+  // local calendar date) so the "this month" figures always agree.
+  const referenceKey = toLocalDateKey(now);
+  const year = now.getFullYear();
+  const month = now.getMonth();
 
   const currentMonthStart = monthStart(year, month);
   const nextMonthStart = monthStart(year, month + 1);
@@ -76,9 +91,8 @@ export async function getDashboardData(
 
   const [
     profile,
-    incomeTotals,
-    expenseTotals,
-    groupedExpenses,
+    monthIncomes,
+    monthExpenses,
     recentExpenses,
     trendExpenses,
     trendIncomes,
@@ -87,29 +101,33 @@ export async function getDashboardData(
       where: { userId },
       select: { currency: true },
     }),
-    prisma.income.aggregate({
+    prisma.income.findMany({
       where: {
         userId,
         incomeDate: { gte: currentMonthStart, lt: nextMonthStart },
       },
-      _sum: { amount: true },
+      select: {
+        id: true,
+        amount: true,
+        source: true,
+        description: true,
+        incomeDate: true,
+      },
     }),
-    prisma.expense.aggregate({
+    prisma.expense.findMany({
       where: {
         userId,
         expenseDate: { gte: currentMonthStart, lt: nextMonthStart },
       },
-      _sum: { amount: true },
-      _count: { _all: true },
-    }),
-    prisma.expense.groupBy({
-      by: ["category"],
-      where: {
-        userId,
-        expenseDate: { gte: currentMonthStart, lt: nextMonthStart },
+      // Same ordering as the Expenses page so top-category ties resolve alike.
+      orderBy: [{ expenseDate: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        category: true,
+        amount: true,
+        description: true,
+        expenseDate: true,
       },
-      _sum: { amount: true },
-      _count: { _all: true },
     }),
     prisma.expense.findMany({
       where: { userId },
@@ -133,26 +151,65 @@ export async function getDashboardData(
     }),
   ]);
 
-  const expenses = toNumber(expenseTotals._sum.amount);
-  const income = toNumber(incomeTotals._sum.amount);
+  const currency = resolveCurrency(profile?.currency);
 
-  const breakdown: CategoryBreakdown[] = groupedExpenses
-    .map((group) => {
-      const option = CATEGORY_BY_VALUE[group.category];
-      const total = toNumber(group._sum.amount);
+  // Reuse the Income and Expenses page summaries so the totals can't drift.
+  const incomeSummary = summarizeIncomes(
+    monthIncomes.map((income) => ({
+      id: income.id,
+      amount: income.amount.toNumber(),
+      source: income.source,
+      description: income.description,
+      incomeDate: income.incomeDate.toISOString().slice(0, 10),
+    })),
+    parseIncomeDateKey(referenceKey),
+  );
+  const expenseRecords = monthExpenses.map((expense) =>
+    toExpenseRecord(expense, currency),
+  );
+  const expenseSummary = summarizeExpenses(
+    expenseRecords,
+    parseDateKey(referenceKey),
+  );
+
+  const income = incomeSummary.monthTotal;
+  const expenses = expenseSummary.monthTotals[0]?.total ?? 0;
+  const net = income - expenses;
+
+  const categoryTotals = new Map<Category, { total: number; count: number }>();
+  for (const expense of expenseRecords) {
+    const entry = categoryTotals.get(expense.category) ?? {
+      total: 0,
+      count: 0,
+    };
+    entry.total += expense.amount;
+    entry.count += 1;
+    categoryTotals.set(expense.category, entry);
+  }
+
+  const breakdown: CategoryBreakdown[] = Array.from(
+    categoryTotals,
+    ([category, { total, count }]) => {
+      const option = CATEGORY_BY_VALUE[category];
 
       return {
-        category: group.category,
+        category,
         label: option.label,
         emoji: option.emoji,
         tint: option.tint,
         color: option.color,
         total,
         share: expenses > 0 ? total / expenses : 0,
-        count: group._count._all,
+        count,
       };
-    })
-    .sort((a, b) => b.total - a.total);
+    },
+  ).sort((a, b) => b.total - a.total);
+
+  const topCategory = expenseSummary.topCategory
+    ? (breakdown.find(
+        (entry) => entry.category === expenseSummary.topCategory?.category,
+      ) ?? null)
+    : null;
 
   const trend: MonthlyPoint[] = Array.from(
     { length: TREND_MONTHS },
@@ -195,16 +252,19 @@ export async function getDashboardData(
   }
 
   return {
+    month: currentMonthStart,
     summary: {
-      currency: profile?.currency ?? "USD",
+      currency,
       income,
+      incomeEntries: incomeSummary.monthCount,
       expenses,
-      net: income - expenses,
-      transactions: expenseTotals._count._all,
+      transactions: expenseSummary.monthCount,
+      net,
+      savingsRate: income > 0 ? Math.round((net / income) * 100) : null,
     },
     breakdown,
     trend,
-    topCategory: breakdown[0] ?? null,
+    topCategory,
     recentExpenses: recentExpenses.map((expense) => {
       const option = CATEGORY_BY_VALUE[expense.category];
 

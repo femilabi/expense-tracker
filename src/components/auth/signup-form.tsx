@@ -7,11 +7,11 @@ import PasswordInput from "@/components/auth/password-input";
 import { signup } from "@/lib/actions/auth";
 
 const inputStyles = {
-  borderColor: "brand.mist",
-  focusRingColor: "brand.teal",
+  borderColor: "border",
+  focusRingColor: "brand.solid",
   _invalid: {
-    borderColor: "brand.red",
-    focusRingColor: "brand.red",
+    borderColor: "border.error",
+    focusRingColor: "fg.error",
   },
 } as const;
 
@@ -86,7 +86,7 @@ export default function SignupForm() {
         </Field.Root>
 
         {state?.message ? (
-          <Text aria-live="polite" color="brand.red" fontSize="sm">
+          <Text aria-live="polite" color="fg.error" fontSize="sm">
             {state.message}
           </Text>
         ) : null}
@@ -99,11 +99,11 @@ export default function SignupForm() {
           w="full"
           h={11}
           borderRadius="full"
-          bg="brand.teal"
-          color="white"
+          bg="brand.solid"
+          color="brand.contrast"
           fontSize="sm"
           fontWeight="medium"
-          _hover={{ bg: "brand.teal", opacity: 0.9 }}
+          _hover={{ bg: "brand.hover" }}
           _active={{ opacity: 0.8 }}
         >
           Create account

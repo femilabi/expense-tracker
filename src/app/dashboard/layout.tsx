@@ -20,10 +20,10 @@ const navLinkStyles = {
   borderRadius: "full",
   fontSize: "sm",
   fontWeight: "medium",
-  color: "brand.slate",
+  color: "fg.muted",
   _hover: {
-    bg: "brand.soft-white",
-    color: "brand.navy",
+    bg: "bg.subtle",
+    color: "fg",
     textDecoration: "none",
   },
 } as const;
@@ -37,12 +37,12 @@ export default async function DashboardLayout({
   const displayName = user.name;
 
   return (
-    <Flex direction="column" flex="1" bg="brand.soft-white">
+    <Flex direction="column" flex="1" bg="bg.subtle">
       <Box
         as="header"
-        bg="white"
+        bg="bg.panel"
         borderBottomWidth="1px"
-        borderColor="brand.mist"
+        borderColor="border"
       >
         <Flex
           align="center"
@@ -56,10 +56,10 @@ export default async function DashboardLayout({
         >
           <Flex align="center" gap={{ base: 2, md: 6 }}>
             <Flex align="center" gap={2}>
-              <Box boxSize="2.5" borderRadius="full" bg="brand.teal" />
+              <Box boxSize="2.5" borderRadius="full" bg="brand.solid" />
               <Text
                 fontWeight="bold"
-                color="brand.navy"
+                color="fg"
                 fontSize={{ base: "sm", md: "md" }}
                 whiteSpace="nowrap"
               >
@@ -71,17 +71,20 @@ export default async function DashboardLayout({
               <ChakraLink
                 asChild
                 {...navLinkStyles}
-                bg="brand.soft-white"
-                color="brand.teal"
+                bg="bg.subtle"
+                color="brand.fg"
                 aria-current="page"
               >
                 <Link href="/dashboard">Dashboard</Link>
               </ChakraLink>
               <ChakraLink asChild {...navLinkStyles}>
-                <Link href="/expenses/new">Add expense</Link>
+                <Link href="/expenses">Expenses</Link>
               </ChakraLink>
               <ChakraLink asChild {...navLinkStyles}>
                 <Link href="/income">Income</Link>
+              </ChakraLink>
+              <ChakraLink asChild {...navLinkStyles}>
+                <Link href="/dashboard/profile">Profile</Link>
               </ChakraLink>
               <ChakraLink asChild {...navLinkStyles}>
                 <Link href="/dashboard/settings">Settings</Link>
@@ -96,7 +99,7 @@ export default async function DashboardLayout({
               </Avatar.Root>
               <Text
                 fontSize="sm"
-                color="brand.navy"
+                color="fg"
                 fontWeight="medium"
                 maxW="12rem"
                 truncate
@@ -112,10 +115,10 @@ export default async function DashboardLayout({
                 size="sm"
                 variant="outline"
                 borderRadius="full"
-                borderColor="brand.mist"
-                color="brand.navy"
+                borderColor="border"
+                color="fg"
                 fontWeight="medium"
-                _hover={{ bg: "brand.soft-white" }}
+                _hover={{ bg: "bg.subtle" }}
               >
                 Sign out
               </Button>

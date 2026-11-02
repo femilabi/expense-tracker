@@ -17,10 +17,10 @@ export default async function ForgotPasswordPage() {
   return (
     <Stack gap={6}>
       <Stack gap={1}>
-        <Heading as="h1" size="2xl" color="brand.navy">
+        <Heading as="h1" size="2xl" color="fg">
           Forgot your password?
         </Heading>
-        <Text color="brand.slate" fontSize="sm">
+        <Text color="fg.muted" fontSize="sm">
           Enter your email and we&apos;ll send you a link to choose a new
           password.
         </Text>
@@ -28,11 +28,11 @@ export default async function ForgotPasswordPage() {
 
       <ForgotPasswordForm />
 
-      <Text color="brand.slate" fontSize="sm" textAlign="center">
+      <Text color="fg.muted" fontSize="sm" textAlign="center">
         Remembered it?{" "}
         <ChakraLink
           asChild
-          color="brand.teal"
+          color="brand.fg"
           fontWeight="medium"
           textDecoration="underline"
         >

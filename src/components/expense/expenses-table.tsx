@@ -260,7 +260,7 @@ export function ExpensesTable({
           px={{ base: 4, md: 5 }}
           py={3}
         >
-          <Text fontSize="sm" color={COLORS.muted}>
+          <Text css={{ fontSize: "sm", color: COLORS.muted }}>
             Showing {start}–{end} of {totalCount}
           </Text>
           <HStack gap={2}>

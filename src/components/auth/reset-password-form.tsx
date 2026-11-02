@@ -14,11 +14,11 @@ import PasswordInput from "@/components/auth/password-input";
 import { resetPassword } from "@/lib/actions/reset-password";
 
 const inputStyles = {
-  borderColor: "brand.mist",
-  focusRingColor: "brand.teal",
+  borderColor: "border",
+  focusRingColor: "brand.solid",
   _invalid: {
-    borderColor: "brand.red",
-    focusRingColor: "brand.red",
+    borderColor: "border.error",
+    focusRingColor: "fg.error",
   },
 } as const;
 
@@ -33,9 +33,9 @@ export default function ResetPasswordForm({ token }: { token: string }) {
         {state?.message ? (
           <Text
             aria-live="polite"
-            bg={state.tone === "error" ? "brand.red/10" : "brand.green/10"}
+            bg={state.tone === "error" ? "danger.subtle" : "success.subtle"}
             borderRadius="lg"
-            color={state.tone === "error" ? "brand.red" : "brand.green"}
+            color={state.tone === "error" ? "fg.error" : "fg.success"}
             fontSize="sm"
             fontWeight="medium"
             px={3}
@@ -48,7 +48,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
         {state?.requestNewLink ? (
           <ChakraLink
             asChild
-            color="brand.teal"
+            color="brand.fg"
             fontSize="sm"
             fontWeight="medium"
             textDecoration="underline"
@@ -58,7 +58,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
         ) : null}
 
         <Field.Root invalid={Boolean(state?.errors?.password)}>
-          <Field.Label htmlFor="password" color="brand.slate">
+          <Field.Label htmlFor="password" color="fg.muted">
             New password
           </Field.Label>
           <PasswordInput
@@ -84,7 +84,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
               </ul>
             </Field.ErrorText>
           ) : (
-            <Field.HelperText color="brand.slate">
+            <Field.HelperText color="fg.muted">
               At least 8 characters with a letter, a number, and a special
               character.
             </Field.HelperText>
@@ -92,7 +92,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
         </Field.Root>
 
         <Field.Root invalid={Boolean(state?.errors?.confirmPassword)}>
-          <Field.Label htmlFor="confirmPassword" color="brand.slate">
+          <Field.Label htmlFor="confirmPassword" color="fg.muted">
             Confirm new password
           </Field.Label>
           <PasswordInput
@@ -116,11 +116,11 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           w="full"
           h={11}
           borderRadius="full"
-          bg="brand.teal"
-          color="white"
+          bg="brand.solid"
+          color="brand.contrast"
           fontSize="sm"
           fontWeight="medium"
-          _hover={{ bg: "brand.teal", opacity: 0.9 }}
+          _hover={{ bg: "brand.hover" }}
           _active={{ opacity: 0.8 }}
         >
           Reset password

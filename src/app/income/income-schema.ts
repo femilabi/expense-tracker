@@ -23,11 +23,19 @@ export const incomeSchema = z.object({
     .string()
     .trim()
     .max(150, { error: "Source must be 150 characters or fewer" })
-    .transform((value) => (value === "" ? null : value)),
+    .nullable()
+    .optional()
+    .transform((value) =>
+      value === "" || value === null || value === undefined ? null : value,
+    ),
   description: z
     .string()
     .trim()
-    .transform((value) => (value === "" ? null : value)),
+    .nullable()
+    .optional()
+    .transform((value) =>
+      value === "" || value === null || value === undefined ? null : value,
+    ),
   incomeDate: z
     .string()
     .regex(DATE_PATTERN, { error: "Select a valid date" })

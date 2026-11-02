@@ -12,21 +12,21 @@ export default function SignupPage() {
   return (
     <Stack gap={6}>
       <Stack gap={1}>
-        <Heading as="h1" size="2xl" color="brand.navy">
+        <Heading as="h1" size="2xl" color="fg">
           Create your account
         </Heading>
-        <Text color="brand.slate" fontSize="sm">
+        <Text color="fg.muted" fontSize="sm">
           Start tracking your expenses in seconds.
         </Text>
       </Stack>
 
       <SignupForm />
 
-      <Text color="brand.slate" fontSize="sm" textAlign="center">
+      <Text color="fg.muted" fontSize="sm" textAlign="center">
         Already have an account?{" "}
         <ChakraLink
           asChild
-          color="brand.teal"
+          color="brand.fg"
           fontWeight="medium"
           textDecoration="underline"
         >

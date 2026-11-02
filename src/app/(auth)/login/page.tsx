@@ -24,10 +24,10 @@ export default async function LoginPage() {
   return (
     <Stack gap={6}>
       <Stack gap={1}>
-        <Heading as="h1" size="2xl" color="brand.navy">
+        <Heading as="h1" size="2xl" color="fg">
           Welcome back
         </Heading>
-        <Text color="brand.slate" fontSize="sm">
+        <Text color="fg.muted" fontSize="sm">
           Log in to continue tracking your expenses.
         </Text>
       </Stack>
@@ -36,11 +36,11 @@ export default async function LoginPage() {
         <LoginForm />
       </Suspense>
 
-      <Text color="brand.slate" fontSize="sm" textAlign="center">
+      <Text color="fg.muted" fontSize="sm" textAlign="center">
         Don&apos;t have an account?{" "}
         <ChakraLink
           asChild
-          color="brand.teal"
+          color="brand.fg"
           fontWeight="medium"
           textDecoration="underline"
         >

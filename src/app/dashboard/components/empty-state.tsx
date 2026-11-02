@@ -11,9 +11,9 @@ export function EmptyState({ message }: { message: string }) {
       px={6}
       textAlign="center"
       borderRadius="xl"
-      bg="brand.soft-white"
+      bg="bg.subtle"
     >
-      <Text fontSize="sm" color="brand.slate">
+      <Text fontSize="sm" color="fg.muted">
         {message}
       </Text>
     </Flex>

@@ -11,9 +11,12 @@ import {
   IconButton,
   Input,
   NativeSelect,
+  Portal,
   SimpleGrid,
   Stack,
   Table,
+  Toast,
+  Toaster,
   Text,
 } from "@chakra-ui/react";
 
@@ -37,7 +40,9 @@ import {
   tableHeaderStyles,
 } from "@/components/shared/styles";
 
+import { createIncome, deleteIncome, updateIncome } from "../actions";
 import type { IncomeInput } from "../income-schema";
+import { toaster } from "../toaster";
 import type {
   DateRangeFilter,
   IncomeFilters,
@@ -45,14 +50,11 @@ import type {
   IncomeSummary,
   SortOption,
 } from "../types";
-import { loadStoredIncomes, saveStoredIncomes } from "../storage";
 import {
-  createIncomeRecord,
   filterAndSortIncomes,
   formatIncomeDate,
   parseIncomeDateKey,
   summarizeIncomes,
-  updateIncomeRecord,
 } from "../utils";
 import { IncomeDialog } from "./income-dialog";
 
@@ -66,11 +68,14 @@ const DEFAULT_FILTERS: IncomeFilters = {
 
 interface IncomeHistoryProps {
   referenceDate: string;
+  initialIncomes: IncomeRecord[];
+  currency: string;
 }
 
 interface IncomeDetailsDialogProps {
   open: boolean;
   income: IncomeRecord | null;
+  currency: string;
   onClose: () => void;
   onEdit: (income: IncomeRecord) => void;
   onDelete: (income: IncomeRecord) => void;
@@ -80,6 +85,7 @@ interface IncomeDetailsDialogProps {
 function IncomeDetailsDialog({
   open,
   income,
+  currency,
   onClose,
   onEdit,
   onDelete,
@@ -115,7 +121,7 @@ function IncomeDetailsDialog({
               color={COLORS.text}
               fontVariantNumeric="tabular-nums"
             >
-              {formatCurrency(income.amount, "USD")}
+              {formatCurrency(income.amount, currency)}
             </Text>
           </Flex>
           <Flex
@@ -208,10 +214,12 @@ function DialogSurface({
   );
 }
 
-export function IncomeHistory({ referenceDate }: IncomeHistoryProps) {
-  const [incomes, setIncomes] = React.useState<IncomeRecord[]>([]);
-  const [isStorageReady, setIsStorageReady] = React.useState(false);
-  const [storageError, setStorageError] = React.useState<string | null>(null);
+export function IncomeHistory({
+  referenceDate,
+  initialIncomes,
+  currency,
+}: IncomeHistoryProps) {
+  const [incomes, setIncomes] = React.useState<IncomeRecord[]>(initialIncomes);
   const [filters, setFilters] = React.useState<IncomeFilters>(DEFAULT_FILTERS);
   const [page, setPage] = React.useState(1);
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
@@ -226,28 +234,8 @@ export function IncomeHistory({ referenceDate }: IncomeHistoryProps) {
   const [deletingIncome, setDeletingIncome] =
     React.useState<IncomeRecord | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
-  const [notice, setNotice] = React.useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
   const pendingDetailsActionRef = React.useRef<(() => void) | null>(null);
-
-  const loadIncomes = React.useCallback(() => {
-    try {
-      setIncomes(loadStoredIncomes());
-      setStorageError(null);
-      setIsStorageReady(true);
-    } catch (error) {
-      setIsStorageReady(false);
-      setStorageError(
-        error instanceof Error
-          ? error.message
-          : "Income could not be loaded from this browser.",
-      );
-    }
-  }, []);
-
-  React.useEffect(() => {
-    const timeout = window.setTimeout(loadIncomes, 0);
-    return () => window.clearTimeout(timeout);
-  }, [loadIncomes]);
 
   const reference = React.useMemo(
     () => parseIncomeDateKey(referenceDate),
@@ -270,21 +258,6 @@ export function IncomeHistory({ referenceDate }: IncomeHistoryProps) {
   const hasFilters =
     filters.search.trim() !== "" || filters.dateRange !== "all";
 
-  const commitIncomes = (nextIncomes: IncomeRecord[]) => {
-    try {
-      saveStoredIncomes(nextIncomes);
-      setIncomes(nextIncomes);
-      setStorageError(null);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Income could not be saved in this browser.";
-      setStorageError(message);
-      throw error;
-    }
-  };
-
   const updateFilters = (patch: Partial<IncomeFilters>) => {
     setFilters((current) => ({ ...current, ...patch }));
     setPage(1);
@@ -295,43 +268,67 @@ export function IncomeHistory({ referenceDate }: IncomeHistoryProps) {
     setPage(1);
   };
 
-  const handleAddIncome = (values: IncomeInput) => {
-    const nextIncomes = [createIncomeRecord(values), ...incomes];
-    commitIncomes(nextIncomes);
-    setFilters(DEFAULT_FILTERS);
-    setPage(1);
-    setIsAddDialogOpen(false);
-    setNotice("Income saved in this browser.");
+  const handleAddIncome = async (values: IncomeInput) => {
+    try {
+      const income = await createIncome(values);
+      setIncomes((current) => [income, ...current]);
+      setFilters(DEFAULT_FILTERS);
+      setPage(1);
+      setIsAddDialogOpen(false);
+      toaster.create({ title: "Income saved.", type: "success" });
+    } catch {
+      toaster.create({
+        title: "Income could not be saved.",
+        description: "Please try again.",
+        type: "error",
+      });
+    }
   };
 
-  const handleUpdateIncome = (values: IncomeInput) => {
+  const handleUpdateIncome = async (values: IncomeInput) => {
     if (!editingIncome) {
       return;
     }
 
-    const updatedIncome = updateIncomeRecord(editingIncome, values);
-    commitIncomes(
-      incomes.map((income) =>
-        income.id === updatedIncome.id ? updatedIncome : income,
-      ),
-    );
-    setIsEditDialogOpen(false);
-    setNotice("Income updated in this browser.");
+    try {
+      const updatedIncome = await updateIncome(editingIncome.id, values);
+      setIncomes((current) =>
+        current.map((income) =>
+          income.id === updatedIncome.id ? updatedIncome : income,
+        ),
+      );
+      setIsEditDialogOpen(false);
+      toaster.create({ title: "Income updated.", type: "success" });
+    } catch {
+      toaster.create({
+        title: "Income could not be updated.",
+        description: "Please try again.",
+        type: "error",
+      });
+    }
   };
 
-  const handleDeleteIncome = () => {
-    if (!deletingIncome) {
+  const handleDeleteIncome = async () => {
+    if (!deletingIncome || isDeleting) {
       return;
     }
 
+    setIsDeleting(true);
     try {
-      commitIncomes(
-        incomes.filter((income) => income.id !== deletingIncome.id),
+      await deleteIncome(deletingIncome.id);
+      setIncomes((current) =>
+        current.filter((income) => income.id !== deletingIncome.id),
       );
       setIsDeleteDialogOpen(false);
-      setNotice("Income deleted from this browser.");
+      toaster.create({ title: "Income deleted.", type: "success" });
     } catch {
-      setNotice("Income could not be deleted. Please check browser storage.");
+      toaster.create({
+        title: "Income could not be deleted.",
+        description: "Please try again.",
+        type: "error",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -389,13 +386,12 @@ export function IncomeHistory({ referenceDate }: IncomeHistoryProps) {
                 Income
               </Heading>
               <Text mt={2} fontSize="sm" lineHeight="1.6" color={COLORS.muted}>
-                Review and manage income saved in this browser.
+                Review and manage your income records.
               </Text>
             </Box>
             <Button
               type="button"
               flexShrink={0}
-              disabled={!isStorageReady}
               onClick={() => setIsAddDialogOpen(true)}
               {...primaryButtonStyles}
             >
@@ -406,70 +402,8 @@ export function IncomeHistory({ referenceDate }: IncomeHistoryProps) {
             </Button>
           </Flex>
 
-          {storageError ? (
-            <Flex
-              role="alert"
-              align={{ base: "flex-start", sm: "center" }}
-              justify="space-between"
-              direction={{ base: "column", sm: "row" }}
-              gap={3}
-              bg={COLORS.dangerSurface}
-              borderWidth="1px"
-              borderColor={COLORS.dangerBorder}
-              borderRadius="lg"
-              px={4}
-              py={3}
-            >
-              <Text fontSize="sm" color={COLORS.text}>
-                {storageError}
-              </Text>
-              <Button
-                type="button"
-                size="sm"
-                onClick={loadIncomes}
-                {...secondaryButtonStyles}
-              >
-                Try again
-              </Button>
-            </Flex>
-          ) : null}
-
-          {notice ? (
-            <Flex
-              role="status"
-              aria-live="polite"
-              align={{ base: "flex-start", sm: "center" }}
-              justify="space-between"
-              direction={{ base: "column", sm: "row" }}
-              gap={2}
-              bg={COLORS.card}
-              borderWidth="1px"
-              borderColor={COLORS.border}
-              borderLeftWidth="3px"
-              borderLeftColor={COLORS.success}
-              borderRadius="lg"
-              boxShadow="sm"
-              px={4}
-              py={3}
-            >
-              <Text fontSize="sm" color={COLORS.text}>
-                {notice}
-              </Text>
-              <Button
-                size="xs"
-                variant="ghost"
-                color={COLORS.text}
-                _hover={{ bg: COLORS.primarySurface }}
-                _focusVisible={focusRing}
-                onClick={() => setNotice(null)}
-              >
-                Dismiss
-              </Button>
-            </Flex>
-          ) : null}
-
           <Stack gap={4}>
-            <IncomeSummaryCards summary={summary} />
+            <IncomeSummaryCards summary={summary} currency={currency} />
             <IncomeToolbar
               filters={filters}
               hasFilters={hasFilters}
@@ -484,7 +418,7 @@ export function IncomeHistory({ referenceDate }: IncomeHistoryProps) {
               pageSize={PAGE_SIZE}
               hasFilters={hasFilters}
               hasAnyIncomes={incomes.length > 0}
-              isStorageReady={isStorageReady}
+              currency={currency}
               onPageChange={setPage}
               onClearFilters={clearFilters}
               onViewIncome={(income) => {
@@ -500,6 +434,7 @@ export function IncomeHistory({ referenceDate }: IncomeHistoryProps) {
       <IncomeDetailsDialog
         open={isDetailsOpen}
         income={viewedIncome}
+        currency={currency}
         onClose={() => setIsDetailsOpen(false)}
         onEdit={(income) => closeDetailsThen(() => openEditDialog(income))}
         onDelete={(income) => closeDetailsThen(() => openDeleteDialog(income))}
@@ -520,7 +455,7 @@ export function IncomeHistory({ referenceDate }: IncomeHistoryProps) {
       <DialogSurface
         open={isDeleteDialogOpen}
         title="Delete income?"
-        description="This will remove the income from this browser. This action cannot be undone."
+        description="This will permanently delete this income record."
         onClose={() => setIsDeleteDialogOpen(false)}
         alert
       >
@@ -547,7 +482,7 @@ export function IncomeHistory({ referenceDate }: IncomeHistoryProps) {
                 color={COLORS.text}
                 fontVariantNumeric="tabular-nums"
               >
-                {formatCurrency(deletingIncome.amount, "USD")}
+                {formatCurrency(deletingIncome.amount, currency)}
               </Text>
             </Flex>
           </Box>
@@ -565,38 +500,58 @@ export function IncomeHistory({ referenceDate }: IncomeHistoryProps) {
             type="button"
             flex="1"
             onClick={handleDeleteIncome}
+            loading={isDeleting}
+            disabled={isDeleting}
             {...dangerButtonStyles}
           >
             Delete income
           </Button>
         </Flex>
       </DialogSurface>
+      <Portal>
+        <Toaster toaster={toaster} w="calc(100vw - 2rem)" maxW="sm">
+          {(toast) => (
+            <Toast.Root key={toast.id} data-type={toast.type}>
+              <Toast.Title>{toast.title}</Toast.Title>
+              {toast.description ? (
+                <Toast.Description>{toast.description}</Toast.Description>
+              ) : null}
+            </Toast.Root>
+          )}
+        </Toaster>
+      </Portal>
     </Box>
   );
 }
 
-function IncomeSummaryCards({ summary }: { summary: IncomeSummary }) {
+function IncomeSummaryCards({
+  summary,
+  currency,
+}: {
+  summary: IncomeSummary;
+  currency: string;
+}) {
   const metrics = [
     {
       label: "This month",
-      value: formatCurrency(summary.monthTotal, "USD"),
+      value: formatCurrency(summary.monthTotal, currency),
       caption: `${summary.monthCount} income ${
         summary.monthCount === 1 ? "entry" : "entries"
       }`,
     },
     {
       label: "Last month",
-      value: formatCurrency(summary.lastMonthTotal, "USD"),
+      value: formatCurrency(summary.lastMonthTotal, currency),
       caption: "Recorded income",
     },
     {
       label: "Year to date",
-      value: formatCurrency(summary.yearTotal, "USD"),
+      value: formatCurrency(summary.yearTotal, currency),
       caption: "Recorded this year",
     },
     {
       label: "All time",
-      value: formatCurrency(summary.lifetimeTotal, "USD"),
+      value: formatCurrency(summary.lifetimeTotal, currency),
       caption: `${summary.lifetimeCount} total ${
         summary.lifetimeCount === 1 ? "entry" : "entries"
       }`,
@@ -735,13 +690,13 @@ function IncomeToolbar({
 
 interface IncomeTableProps {
   incomes: IncomeRecord[];
+  currency: string;
   totalCount: number;
   page: number;
   pageCount: number;
   pageSize: number;
   hasFilters: boolean;
   hasAnyIncomes: boolean;
-  isStorageReady: boolean;
   onPageChange: (page: number) => void;
   onClearFilters: () => void;
   onViewIncome: (income: IncomeRecord) => void;
@@ -750,13 +705,13 @@ interface IncomeTableProps {
 
 function IncomeTable({
   incomes,
+  currency,
   totalCount,
   page,
   pageCount,
   pageSize,
   hasFilters,
   hasAnyIncomes,
-  isStorageReady,
   onPageChange,
   onClearFilters,
   onViewIncome,
@@ -781,9 +736,7 @@ function IncomeTable({
           <Text mt={0.5} fontSize="sm" color={COLORS.muted}>
             {hasAnyIncomes
               ? `${totalCount} ${totalCount === 1 ? "entry" : "entries"}${
-                  hasFilters
-                    ? " matching your filters"
-                    : " saved in this browser"
+                  hasFilters ? " matching your filters" : ""
                 }`
               : "No income recorded yet"}
           </Text>
@@ -845,7 +798,6 @@ function IncomeTable({
                     ) : (
                       <Button
                         type="button"
-                        disabled={!isStorageReady}
                         onClick={onAddIncome}
                         {...primaryButtonStyles}
                       >
@@ -858,7 +810,7 @@ function IncomeTable({
             ) : (
               incomes.map((income) => {
                 const source = income.source?.trim() || "Unspecified source";
-                const formattedAmount = formatCurrency(income.amount, "USD");
+                const formattedAmount = formatCurrency(income.amount, currency);
 
                 return (
                   <Table.Row
@@ -956,7 +908,7 @@ function IncomeTable({
           px={{ base: 4, md: 5 }}
           py={3}
         >
-          <Text fontSize="sm" color={COLORS.muted}>
+          <Text css={{ fontSize: "sm", color: COLORS.muted }}>
             Showing {start}–{end} of {totalCount}
           </Text>
           <HStack gap={2}>

@@ -14,7 +14,7 @@ interface SummaryOverviewProps {
   summary: ExpenseSummary;
 }
 
-interface SummaryMetric {
+export interface SummaryMetric {
   label: string;
   value: string;
   caption: string;
@@ -125,6 +125,11 @@ export function SummaryOverview({ summary }: SummaryOverviewProps) {
     },
   ];
 
+  return <SummaryMetrics metrics={metrics} />;
+}
+
+/** Four-up summary card row shared by the Expenses page and the dashboard. */
+export function SummaryMetrics({ metrics }: { metrics: SummaryMetric[] }) {
   return (
     <Box {...surfaceStyles} overflow="hidden">
       <SimpleGrid columns={{ base: 2, xl: 4 }}>
