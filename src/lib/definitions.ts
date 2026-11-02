@@ -115,3 +115,16 @@ export type ChangePasswordState =
       message?: string;
     }
   | undefined;
+
+export const DeleteAccountSchema = z.object({
+  password: z.string().min(1, { error: "Please enter your password." }),
+});
+
+export type DeleteAccountState =
+  | {
+      errors?: {
+        password?: string[];
+      };
+      message?: string;
+    }
+  | undefined;
