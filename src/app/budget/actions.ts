@@ -14,7 +14,7 @@ import {
 import type { BudgetActionResult } from "./types";
 
 const SAVE_ERROR = "We couldn't save this budget. Please try again.";
-const DELETE_ERROR = "We couldn't remove this budget. Please try again.";
+const DELETE_ERROR = "We couldn't delete this budget. Please try again.";
 
 async function getCurrentUserId(): Promise<string | null> {
   const session = await getServerSession();
@@ -85,7 +85,7 @@ export async function deleteBudget(
   if (!userId) {
     return {
       success: false,
-      error: "You need to be signed in to remove a budget.",
+      error: "You need to be signed in to delete a budget.",
     };
   }
 

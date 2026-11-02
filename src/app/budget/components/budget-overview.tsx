@@ -2,25 +2,20 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-  Box,
-  Flex,
-  Heading,
-  Portal,
-  Stack,
-  Text,
-  Toast,
-  Toaster,
-} from "@chakra-ui/react";
+import { Box, Flex, Heading, Stack, Text } from "@chakra-ui/react";
 
 import type { BudgetMonth, CategoryBudget } from "@/lib/budgets";
 import { formatMonth } from "@/lib/format";
 import { getCurrentMonth, monthStart, toMonthKey } from "@/lib/month";
 
+import {
+  ExpenseToaster,
+  expenseToaster,
+} from "@/components/expense/expense-toaster";
 import { COLORS } from "@/components/shared/colors";
 
 import { deleteBudget, saveBudget } from "../actions";
-import { toaster } from "../toaster";
+import type { BudgetActionResult } from "../types";
 import { BudgetDialog } from "./budget-dialog";
 import { BudgetList } from "./budget-list";
 import { MonthSelector } from "./month-selector";
@@ -78,22 +73,34 @@ export function BudgetOverview({
       return;
     }
 
-    const result = await saveBudget({
-      category: editingItem.category,
-      month: monthKey,
-      amount,
-    });
+    const isNewBudget = editingItem.progress.budget === null;
+    let result: BudgetActionResult;
+
+    try {
+      result = await saveBudget({
+        category: editingItem.category,
+        month: monthKey,
+        amount,
+      });
+    } catch {
+      result = {
+        success: false,
+        error: "We couldn't save this budget. Please try again.",
+      };
+    }
 
     if (!result.success) {
-      toaster.create({ title: result.error, type: "error" });
+      expenseToaster.create({ title: result.error, type: "error" });
       throw new Error(result.error);
     }
 
-    toaster.create({
-      title: `${editingItem.label} budget saved.`,
+    setIsEditOpen(false);
+    expenseToaster.create({
+      title: isNewBudget
+        ? "Budget added successfully."
+        : "Budget updated successfully.",
       type: "success",
     });
-    setIsEditOpen(false);
   };
 
   const handleRemove = async () => {
@@ -102,22 +109,30 @@ export function BudgetOverview({
     }
 
     setIsRemoving(true);
-    const result = await deleteBudget({
-      category: removingItem.category,
-      month: monthKey,
-    });
-    setIsRemoving(false);
+    try {
+      const result = await deleteBudget({
+        category: removingItem.category,
+        month: monthKey,
+      });
 
-    if (!result.success) {
-      toaster.create({ title: result.error, type: "error" });
-      return;
+      if (!result.success) {
+        expenseToaster.create({ title: result.error, type: "error" });
+        return;
+      }
+
+      setIsRemoveOpen(false);
+      expenseToaster.create({
+        title: "Budget deleted successfully.",
+        type: "success",
+      });
+    } catch {
+      expenseToaster.create({
+        title: "We couldn't delete this budget. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setIsRemoving(false);
     }
-
-    toaster.create({
-      title: `${removingItem.label} budget removed.`,
-      type: "success",
-    });
-    setIsRemoveOpen(false);
   };
 
   return (
@@ -189,15 +204,7 @@ export function BudgetOverview({
         onConfirm={handleRemove}
       />
 
-      <Portal>
-        <Toaster toaster={toaster} w="calc(100vw - 2rem)" maxW="sm">
-          {(toast) => (
-            <Toast.Root key={toast.id} data-type={toast.type}>
-              <Toast.Title>{toast.title}</Toast.Title>
-            </Toast.Root>
-          )}
-        </Toaster>
-      </Portal>
+      <ExpenseToaster />
     </Box>
   );
 }
