@@ -2,6 +2,7 @@ import { Resend } from "resend";
 
 const RESET_SUBJECT = "Reset your Expense Tracker password";
 const CONFIRMATION_SUBJECT = "Your Expense Tracker password was changed";
+const ACCOUNT_DELETED_SUBJECT = "Your Expense Tracker account was deleted";
 const EXPIRY_MINUTES = 15;
 
 function getAppUrl(): string {
@@ -134,6 +135,29 @@ export async function sendPasswordChangedEmail(to: string): Promise<void> {
       "",
       "The password of your account was just changed and all other sessions were signed out.",
       "If this was not you, reset your password immediately and contact support.",
+    ].join("\n"),
+  });
+}
+
+export async function sendAccountDeletedEmail(to: string): Promise<void> {
+  await sendEmail({
+    to,
+    subject: ACCOUNT_DELETED_SUBJECT,
+    html: `
+      <div style="font-family: Arial, Helvetica, sans-serif; color: #14213d;">
+        <h1 style="font-size: 20px;">Your account was deleted</h1>
+        <p>Your Expense Tracker account and all of its data were permanently deleted.</p>
+        <p style="color:#5b6b7f;font-size: 14px;">
+          You were signed out on every device. If this was not you, contact support
+          immediately.
+        </p>
+      </div>
+    `,
+    text: [
+      "Your Expense Tracker account was deleted",
+      "",
+      "Your account and all of its data were permanently deleted and you were signed out on every device.",
+      "If this was not you, contact support immediately.",
     ].join("\n"),
   });
 }

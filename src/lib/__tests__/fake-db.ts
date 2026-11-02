@@ -1,7 +1,8 @@
 /**
  * In-memory stand-in for the parts of the Prisma client used by the password
- * flows. Interactive transactions run one at a time (like rows locked by the
- * conditional updates in MySQL) and roll back every change when they throw.
+ * and account deletion flows. Interactive transactions run one at a time
+ * (like rows locked by the conditional updates in MySQL) and roll back every
+ * change when they throw.
  */
 
 export type UserRow = {
@@ -22,16 +23,42 @@ export type ResetTokenRow = {
   createdAt: Date;
 };
 
+/** A row of a table that only matters here because it belongs to a user. */
+export type OwnedRow = {
+  id: string;
+  userId: string;
+};
+
+export const OWNED_TABLES = [
+  "profiles",
+  "incomes",
+  "expenses",
+  "monthlySummaries",
+] as const;
+
+export type OwnedTable = (typeof OWNED_TABLES)[number];
+
 type State = {
   users: UserRow[];
   resetTokens: ResetTokenRow[];
-};
+} & Record<OwnedTable, OwnedRow[]>;
 
 type UserWhere = { id?: string; email?: string };
 type TokenWhere = { id?: string; userId?: string; usedAt?: null };
 
 let nextId = 1;
-let state: State = { users: [], resetTokens: [] };
+function emptyState(): State {
+  return {
+    users: [],
+    resetTokens: [],
+    profiles: [],
+    incomes: [],
+    expenses: [],
+    monthlySummaries: [],
+  };
+}
+
+let state: State = emptyState();
 let failures = new Set<string>();
 let transactionQueue: Promise<unknown> = Promise.resolve();
 
@@ -39,6 +66,10 @@ function cloneState(source: State): State {
   return {
     users: source.users.map((user) => ({ ...user })),
     resetTokens: source.resetTokens.map((token) => ({ ...token })),
+    profiles: source.profiles.map((row) => ({ ...row })),
+    incomes: source.incomes.map((row) => ({ ...row })),
+    expenses: source.expenses.map((row) => ({ ...row })),
+    monthlySummaries: source.monthlySummaries.map((row) => ({ ...row })),
   };
 }
 
@@ -62,6 +93,17 @@ function tokenMatches(token: ResetTokenRow, where: TokenWhere): boolean {
     (where.userId === undefined || token.userId === where.userId) &&
     (!("usedAt" in where) || token.usedAt === where.usedAt)
   );
+}
+
+/** `deleteMany({ where: { userId } })` for a table of user owned rows. */
+function ownedModel(table: OwnedTable) {
+  return {
+    async deleteMany({ where }: { where: { userId: string } }) {
+      const before = state[table].length;
+      state[table] = state[table].filter((row) => row.userId !== where.userId);
+      return { count: before - state[table].length };
+    },
+  };
 }
 
 const models = {
@@ -95,6 +137,23 @@ const models = {
       if (data.sessionVersion) {
         user.sessionVersion += data.sessionVersion.increment;
       }
+      return { ...user };
+    },
+    async delete({ where }: { where: UserWhere }) {
+      failIfRequested("user.delete");
+      const user = findUser(where);
+      if (!user) {
+        throw new Error("User not found");
+      }
+      // Rows still pointing at the user would violate a foreign key.
+      const remaining = [
+        ...state.resetTokens,
+        ...OWNED_TABLES.flatMap((table) => state[table]),
+      ].some((row) => row.userId === user.id);
+      if (remaining) {
+        throw new Error("Foreign key constraint failed");
+      }
+      state.users = state.users.filter((row) => row !== user);
       return { ...user };
     },
   },
@@ -135,7 +194,18 @@ const models = {
       }
       return { count: matches.length };
     },
+    async deleteMany({ where }: { where: { userId: string } }) {
+      const before = state.resetTokens.length;
+      state.resetTokens = state.resetTokens.filter(
+        (token) => token.userId !== where.userId,
+      );
+      return { count: before - state.resetTokens.length };
+    },
   },
+  profile: ownedModel("profiles"),
+  income: ownedModel("incomes"),
+  expense: ownedModel("expenses"),
+  monthlySummary: ownedModel("monthlySummaries"),
 };
 
 const client = {
@@ -164,12 +234,14 @@ const client = {
 export const fakeDb = {
   client,
   reset() {
-    state = { users: [], resetTokens: [] };
+    state = emptyState();
     failures = new Set();
     transactionQueue = Promise.resolve();
   },
   /** Makes the next call of the given operation throw. */
-  failNext(operation: "user.update" | "passwordResetToken.updateMany") {
+  failNext(
+    operation: "user.update" | "user.delete" | "passwordResetToken.updateMany",
+  ) {
     failures.add(operation);
   },
   addUser(user: Omit<UserRow, "id" | "passwordChangedAt" | "sessionVersion">) {
@@ -191,6 +263,24 @@ export const fakeDb = {
     };
     state.resetTokens.push(row);
     return { ...row };
+  },
+  addOwnedRow(table: OwnedTable, userId: string) {
+    const row: OwnedRow = { id: `${table}-${nextId++}`, userId };
+    state[table].push(row);
+    return { ...row };
+  },
+  /** Counts the rows of every table, reset tokens included, owned by a user. */
+  countOwnedRows(userId: string) {
+    const count = (rows: OwnedRow[]) =>
+      rows.filter((row) => row.userId === userId).length;
+
+    return {
+      resetTokens: count(state.resetTokens),
+      profiles: count(state.profiles),
+      incomes: count(state.incomes),
+      expenses: count(state.expenses),
+      monthlySummaries: count(state.monthlySummaries),
+    };
   },
   getUser(id: string) {
     const user = findUser({ id });
