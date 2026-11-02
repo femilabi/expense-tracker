@@ -68,6 +68,7 @@ export async function deleteAccount(
       // the deletion complete even if a relation loses its cascade later.
       await tx.passwordResetToken.deleteMany({ where: { userId } });
       await tx.monthlySummary.deleteMany({ where: { userId } });
+      await tx.budget.deleteMany({ where: { userId } });
       await tx.expense.deleteMany({ where: { userId } });
       await tx.income.deleteMany({ where: { userId } });
       await tx.profile.deleteMany({ where: { userId } });

@@ -3,8 +3,10 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 
 import { metaLabelStyles } from "@/components/shared/styles";
+import { getBudgetMonth } from "@/lib/budgets";
 import { getDashboardData } from "@/lib/dashboard";
 import { formatMonth } from "@/lib/format";
+import { getCurrentMonth } from "@/lib/month";
 import { getCurrentUser } from "@/lib/session";
 
 import { DashboardSections } from "./components/dashboard-sections";
@@ -21,7 +23,10 @@ export default async function Dashboard() {
   await connection();
 
   const user = await getCurrentUser();
-  const { month, summary, topCategory } = await getDashboardData(user.id);
+  const [{ month, summary, topCategory }, budgetMonth] = await Promise.all([
+    getDashboardData(user.id),
+    getBudgetMonth(user.id, getCurrentMonth()),
+  ]);
 
   return (
     <Box minH="100vh" bg="bg.subtle" p={{ base: 4, md: 6 }}>
@@ -47,7 +52,7 @@ export default async function Dashboard() {
         <SummaryCards summary={summary} topCategory={topCategory} />
       </Stack>
 
-      <DashboardSections />
+      <DashboardSections budgetMonth={budgetMonth} />
     </Box>
   );
 }

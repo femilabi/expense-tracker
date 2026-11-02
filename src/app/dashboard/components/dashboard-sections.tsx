@@ -11,6 +11,10 @@ import {
 } from "@chakra-ui/react";
 import Link from "next/link";
 
+import type { BudgetMonth } from "@/lib/budgets";
+
+import { SpendingCategoriesCard } from "./spending-categories-card";
+
 const monthlySpending = [
   { month: "Jan", height: 24 },
   { month: "Feb", height: 40 },
@@ -18,12 +22,6 @@ const monthlySpending = [
   { month: "Apr", height: 52 },
   { month: "May", height: 44 },
   { month: "Jun", height: 64 },
-];
-
-const categories = [
-  { name: "Food", value: 35, color: "danger.solid" },
-  { name: "Transport", value: 20, color: "brand.solid" },
-  { name: "Entertainment", value: 15, color: "accent.solid" },
 ];
 
 const transactions = [
@@ -47,9 +45,12 @@ const transactions = [
   },
 ];
 
-/** Chart, category, budget and transaction sections (still mock data).
- */
-export function DashboardSections() {
+interface DashboardSectionsProps {
+  budgetMonth: BudgetMonth;
+}
+
+/** Chart, budget and transaction sections; only the categories card is live. */
+export function DashboardSections({ budgetMonth }: DashboardSectionsProps) {
   return (
     <>
       {/* Monthly Spending */}
@@ -112,40 +113,7 @@ export function DashboardSections() {
         }}
         gap="6"
       >
-        {/* Spending Categories */}
-        <Box
-          bg="bg.panel"
-          p="6"
-          borderRadius="2xl"
-          shadow="md"
-          border="1px solid"
-          borderColor="border"
-        >
-          <Heading size="lg" color="fg">
-            Spending Categories
-          </Heading>
-
-          <Stack gap="5" mt="6">
-            {categories.map((category) => (
-              <Box key={category.name}>
-                <Flex justify="space-between" mb="2">
-                  <Text fontWeight="medium">{category.name}</Text>
-
-                  <Text color="fg.muted">{category.value}%</Text>
-                </Flex>
-
-                <Box h="3" bg="bg.muted" borderRadius="full" overflow="hidden">
-                  <Box
-                    h="full"
-                    width={`${category.value}%`}
-                    bg={category.color}
-                    borderRadius="full"
-                  />
-                </Box>
-              </Box>
-            ))}
-          </Stack>
-        </Box>
+        <SpendingCategoriesCard budgetMonth={budgetMonth} />
 
         {/* Budget Progress */}
         <Box
