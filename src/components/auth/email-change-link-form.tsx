@@ -35,9 +35,9 @@ export default function EmailChangeLinkForm({
         {state?.message ? (
           <Text
             aria-live="polite"
-            bg="brand.red/10"
+            bg="danger.subtle"
             borderRadius="lg"
-            color="brand.red"
+            color="fg.error"
             fontSize="sm"
             fontWeight="medium"
             px={3}
@@ -54,11 +54,11 @@ export default function EmailChangeLinkForm({
           w="full"
           h={11}
           borderRadius="full"
-          bg="brand.teal"
-          color="white"
+          bg="brand.solid"
+          color="brand.contrast"
           fontSize="sm"
           fontWeight="medium"
-          _hover={{ bg: "brand.teal", opacity: 0.9 }}
+          _hover={{ bg: "brand.hover" }}
           _active={{ opacity: 0.8 }}
         >
           {submitLabel}

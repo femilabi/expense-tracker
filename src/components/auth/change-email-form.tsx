@@ -7,11 +7,11 @@ import PasswordInput from "@/components/auth/password-input";
 import { requestEmailChange } from "@/lib/actions/change-email";
 
 const inputStyles = {
-  borderColor: "brand.mist",
-  focusRingColor: "brand.teal",
+  borderColor: "border",
+  focusRingColor: "brand.solid",
   _invalid: {
-    borderColor: "brand.red",
-    focusRingColor: "brand.red",
+    borderColor: "border.error",
+    focusRingColor: "fg.error",
   },
 } as const;
 
@@ -27,9 +27,9 @@ export default function ChangeEmailForm() {
         {state?.message ? (
           <Text
             aria-live="polite"
-            bg={state.tone === "info" ? "brand.green/10" : "brand.red/10"}
+            bg={state.tone === "info" ? "success.subtle" : "danger.subtle"}
             borderRadius="lg"
-            color={state.tone === "info" ? "brand.green" : "brand.red"}
+            color={state.tone === "info" ? "fg.success" : "fg.error"}
             fontSize="sm"
             fontWeight="medium"
             px={3}
@@ -40,7 +40,7 @@ export default function ChangeEmailForm() {
         ) : null}
 
         <Field.Root invalid={Boolean(state?.errors?.newEmail)}>
-          <Field.Label htmlFor="newEmail" color="brand.slate">
+          <Field.Label htmlFor="newEmail" color="fg.muted">
             New email
           </Field.Label>
           <Input
@@ -58,7 +58,7 @@ export default function ChangeEmailForm() {
         </Field.Root>
 
         <Field.Root invalid={Boolean(state?.errors?.currentPassword)}>
-          <Field.Label htmlFor="changeEmailPassword" color="brand.slate">
+          <Field.Label htmlFor="changeEmailPassword" color="fg.muted">
             Current password
           </Field.Label>
           <PasswordInput
@@ -82,11 +82,11 @@ export default function ChangeEmailForm() {
           w="full"
           h={11}
           borderRadius="full"
-          bg="brand.teal"
-          color="white"
+          bg="brand.solid"
+          color="brand.contrast"
           fontSize="sm"
           fontWeight="medium"
-          _hover={{ bg: "brand.teal", opacity: 0.9 }}
+          _hover={{ bg: "brand.hover" }}
           _active={{ opacity: 0.8 }}
         >
           Send confirmation link

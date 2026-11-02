@@ -23,10 +23,10 @@ export default async function UndoEmailChangePage({
   return (
     <Stack gap={6}>
       <Stack gap={1}>
-        <Heading as="h1" size="2xl" color="brand.navy">
+        <Heading as="h1" size="2xl" color="fg">
           Undo email change
         </Heading>
-        <Text color="brand.slate" fontSize="sm">
+        <Text color="fg.muted" fontSize="sm">
           Your account will go back to your previous email and every device will
           be signed out. We&apos;ll email you a link to reset your password.
         </Text>

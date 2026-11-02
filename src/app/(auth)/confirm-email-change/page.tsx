@@ -23,10 +23,10 @@ export default async function ConfirmEmailChangePage({
   return (
     <Stack gap={6}>
       <Stack gap={1}>
-        <Heading as="h1" size="2xl" color="brand.navy">
+        <Heading as="h1" size="2xl" color="fg">
           Confirm your new email
         </Heading>
-        <Text color="brand.slate" fontSize="sm">
+        <Text color="fg.muted" fontSize="sm">
           Your account will use this address from now on, and you&apos;ll be
           signed out on every device.
         </Text>
