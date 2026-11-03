@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import { Box, Heading, Stack, Text } from "@chakra-ui/react";
+import { Box, Flex, Heading, Stack, Text } from "@chakra-ui/react";
 
 import ChangeEmailForm from "@/components/auth/change-email-form";
 import ChangePasswordForm from "@/components/auth/change-password-form";
@@ -48,7 +48,7 @@ export default async function SettingsPage() {
   const { email, pendingChange } = await getEmailSettings(id);
 
   return (
-    <Stack gap={6} maxW="md">
+    <Stack gap={6} maxW="5xl" mx="auto">
       <Stack gap={1}>
         <Heading as="h1" size="2xl" color="brand.navy">
           Settings
@@ -59,72 +59,85 @@ export default async function SettingsPage() {
       </Stack>
 
       <Box
-        bg="white"
-        borderWidth="1px"
-        borderColor="brand.mist"
-        borderRadius="2xl"
-        px={{ base: 6, sm: 8 }}
-        py={8}
+        display="grid"
+        gridTemplateColumns={{
+          base: "minmax(0, 1fr)",
+          lg: "repeat(2, minmax(0, 1fr))",
+        }}
+        gap={6}
       >
-        <Stack gap={6}>
-          <Stack gap={1}>
-            <Heading as="h2" size="lg" color="brand.navy">
-              Change password
-            </Heading>
-            <Text color="brand.slate" fontSize="sm">
-              You&apos;ll be signed out on every device, including this one, and
-              asked to log in again.
-            </Text>
-          </Stack>
-
-          <ChangePasswordForm />
-        </Stack>
-      </Box>
-
-      <Box
-        bg="white"
-        borderWidth="1px"
-        borderColor="brand.mist"
-        borderRadius="2xl"
-        px={{ base: 6, sm: 8 }}
-        py={8}
-      >
-        <Stack gap={6}>
-          <Stack gap={1}>
-            <Heading as="h2" size="lg" color="brand.navy">
-              Change email
-            </Heading>
-            <Text color="brand.slate" fontSize="sm">
-              Current email:{" "}
-              <Text as="span" color="brand.navy" fontWeight="medium">
-                {email}
+        <Box
+          display="flex"
+          flexDirection="column"
+          bg="white"
+          borderWidth="1px"
+          borderColor="brand.mist"
+          borderRadius="2xl"
+          px={{ base: 6, sm: 8 }}
+          py={8}
+        >
+          <Stack gap={6} flex="1">
+            <Stack gap={1}>
+              <Heading as="h2" size="lg" color="brand.navy">
+                Change password
+              </Heading>
+              <Text color="brand.slate" fontSize="sm">
+                You&apos;ll be signed out on every device, including this one,
+                and asked to log in again.
               </Text>
-            </Text>
-            <Text color="brand.slate" fontSize="sm">
-              We&apos;ll send a confirmation link to the new address. Your old
-              address can undo the change for 3 days.
-            </Text>
+            </Stack>
+
+            <ChangePasswordForm />
           </Stack>
+        </Box>
 
-          {pendingChange ? (
-            <Text
-              bg="brand.teal/10"
-              borderRadius="lg"
-              color="brand.navy"
-              fontSize="sm"
-              px={3}
-              py={2}
-            >
-              Waiting for confirmation of{" "}
-              <Text as="span" fontWeight="medium">
-                {pendingChange.newEmail}
+        <Box
+          display="flex"
+          flexDirection="column"
+          bg="white"
+          borderWidth="1px"
+          borderColor="brand.mist"
+          borderRadius="2xl"
+          px={{ base: 6, sm: 8 }}
+          py={8}
+        >
+          <Stack gap={6} flex="1">
+            <Stack gap={1}>
+              <Heading as="h2" size="lg" color="brand.navy">
+                Change email
+              </Heading>
+              <Text color="brand.slate" fontSize="sm">
+                Current email:{" "}
+                <Text as="span" color="brand.navy" fontWeight="medium">
+                  {email}
+                </Text>
               </Text>
-              . The link expires {pendingChange.expiresIn}.
-            </Text>
-          ) : null}
+              <Text color="brand.slate" fontSize="sm">
+                We&apos;ll send a confirmation link to the new address. Your old
+                address can undo the change for 3 days.
+              </Text>
+            </Stack>
 
-          <ChangeEmailForm />
-        </Stack>
+            {pendingChange ? (
+              <Text
+                bg="brand.teal/10"
+                borderRadius="lg"
+                color="brand.navy"
+                fontSize="sm"
+                px={3}
+                py={2}
+              >
+                Waiting for confirmation of{" "}
+                <Text as="span" fontWeight="medium">
+                  {pendingChange.newEmail}
+                </Text>
+                . The link expires {pendingChange.expiresIn}.
+              </Text>
+            ) : null}
+
+            <ChangeEmailForm />
+          </Stack>
+        </Box>
       </Box>
 
       <Box
@@ -137,8 +150,13 @@ export default async function SettingsPage() {
         px={{ base: 6, sm: 8 }}
         py={8}
       >
-        <Stack gap={6}>
-          <Stack gap={1}>
+        <Flex
+          direction={{ base: "column", md: "row" }}
+          align={{ base: "stretch", md: "center" }}
+          justify="space-between"
+          gap={6}
+        >
+          <Stack gap={1} flex="1">
             <Heading
               as="h2"
               id="danger-zone-heading"
@@ -154,7 +172,7 @@ export default async function SettingsPage() {
           </Stack>
 
           <DeleteAccountForm />
-        </Stack>
+        </Flex>
       </Box>
     </Stack>
   );
