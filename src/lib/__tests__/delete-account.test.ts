@@ -99,6 +99,19 @@ function addUserWithData(userEmail: string, passwordHash: string): string {
     tokenHash: `hash-${id}`,
     expiresAt: new Date(Date.now() + 60_000),
   });
+  fakeDb.addEmailChangeRequest({
+    userId: id,
+    newEmail: `pending-${userEmail}`,
+    tokenHash: `request-hash-${id}`,
+    expiresAt: new Date(Date.now() + 60_000),
+  });
+  fakeDb.addEmailChangeUndo({
+    userId: id,
+    oldEmail: `old-${userEmail}`,
+    newEmail: userEmail,
+    tokenHash: `undo-hash-${id}`,
+    expiresAt: new Date(Date.now() + 60_000),
+  });
   return id;
 }
 
@@ -134,6 +147,8 @@ async function deleteAsUser(
 
 const NOTHING_DELETED = {
   resetTokens: 1,
+  emailChangeRequests: 1,
+  emailChangeUndos: 1,
   profiles: 1,
   incomes: 1,
   expenses: 1,
@@ -191,6 +206,8 @@ describe("account deletion", () => {
     expect(fakeDb.getUser(userId)).toBeUndefined();
     expect(fakeDb.countOwnedRows(userId)).toEqual({
       resetTokens: 0,
+      emailChangeRequests: 0,
+      emailChangeUndos: 0,
       profiles: 0,
       incomes: 0,
       expenses: 0,

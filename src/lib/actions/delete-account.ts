@@ -67,6 +67,8 @@ export async function deleteAccount(
       // The foreign keys cascade as well, deleting each table explicitly keeps
       // the deletion complete even if a relation loses its cascade later.
       await tx.passwordResetToken.deleteMany({ where: { userId } });
+      await tx.emailChangeRequest.deleteMany({ where: { userId } });
+      await tx.emailChangeUndo.deleteMany({ where: { userId } });
       await tx.monthlySummary.deleteMany({ where: { userId } });
       await tx.budget.deleteMany({ where: { userId } });
       await tx.expense.deleteMany({ where: { userId } });

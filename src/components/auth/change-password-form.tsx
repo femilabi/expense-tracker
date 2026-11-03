@@ -22,8 +22,8 @@ export default function ChangePasswordForm() {
   );
 
   return (
-    <form action={formAction}>
-      <Stack gap={4}>
+    <form action={formAction} style={{ display: "flex", flex: 1 }}>
+      <Stack gap={4} flex="1">
         {state?.message ? (
           <Text
             aria-live="polite"
@@ -111,7 +111,7 @@ export default function ChangePasswordForm() {
           type="submit"
           loading={pending}
           loadingText="Saving…"
-          mt={1}
+          mt="auto"
           w="full"
           h={11}
           borderRadius="full"

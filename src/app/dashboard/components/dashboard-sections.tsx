@@ -5,6 +5,7 @@ import {
   Flex,
   Grid,
   Heading,
+  Link as ChakraLink,
   Progress,
   Stack,
   Text,
@@ -95,7 +96,7 @@ export function DashboardSections({ budgetMonth }: DashboardSectionsProps) {
                   }}
                 />
 
-                <Text mt="2" fontSize="sm" color="fg.muted">
+                <Text mt="2" css={{ fontSize: "sm", color: "fg.muted" }}>
                   {item.month}
                 </Text>
               </Flex>
@@ -124,9 +125,24 @@ export function DashboardSections({ budgetMonth }: DashboardSectionsProps) {
           border="1px solid"
           borderColor="border"
         >
-          <Link href="/expenses/new">Add expense</Link>
+          <Flex justify="space-between" align="center" mb="6">
+            <Heading size="lg" color="fg">
+              Budget progress
+            </Heading>
+            <ChakraLink
+              asChild
+              css={{
+                fontSize: "sm",
+                fontWeight: "semibold",
+                color: "brand.fg",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              <Link href="/expenses">Expenses</Link>
+            </ChakraLink>
+          </Flex>
 
-          <Box mt="8">
+          <Box>
             <Flex justify="space-between" mb="3">
               <Text color="fg.muted">R8,500 of R10,000 used</Text>
 
@@ -141,7 +157,7 @@ export function DashboardSections({ budgetMonth }: DashboardSectionsProps) {
               </Progress.Track>
             </Progress.Root>
 
-            <Text mt="4" fontSize="sm" color="fg.muted">
+            <Text mt="4" css={{ fontSize: "sm", color: "fg.muted" }}>
               85% of monthly budget used
             </Text>
           </Box>
@@ -183,7 +199,7 @@ export function DashboardSections({ budgetMonth }: DashboardSectionsProps) {
               <Box>
                 <Text fontWeight="semibold">{transaction.name}</Text>
 
-                <Text fontSize="sm" color="fg.muted">
+                <Text css={{ fontSize: "sm", color: "fg.muted" }}>
                   {transaction.category}
                 </Text>
               </Box>

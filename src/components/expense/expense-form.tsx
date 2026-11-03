@@ -29,10 +29,11 @@ import {
   expenseSchema,
   type ExpenseInput,
 } from "@/app/expenses/expense-form/expense-schema";
-import { formatDate } from "@/app/expenses/utils";
+import { toLocalDateKey } from "@/app/expenses/utils";
 
 import { COLORS } from "@/components/shared/colors";
-import { CalendarIcon, CloseIcon } from "@/components/shared/icons";
+import { DatePickerField } from "@/components/shared/date-picker-field";
+import { CloseIcon } from "@/components/shared/icons";
 import {
   controlGroupStyles,
   controlStyles,
@@ -69,6 +70,20 @@ const labelProps = {
   color: COLORS.text,
 } as const;
 
+const subscribeToNothing = () => () => {};
+
+/**
+ * Today's date in the browser's local time zone. Empty during SSR, so the
+ * server never renders its own (possibly different) date.
+ */
+function useLocalToday(): string {
+  return React.useSyncExternalStore(
+    subscribeToNothing,
+    () => toLocalDateKey(new Date()),
+    () => "",
+  );
+}
+
 function RequiredMark() {
   return (
     <Text
@@ -104,10 +119,12 @@ export function ExpenseForm({
   const [description, setDescription] = React.useState(
     initialDescription ?? "",
   );
-  const [expenseDate, setExpenseDate] = React.useState(
-    initialExpenseDate ?? "",
+  // null means "untouched": new expenses default to the user's local today.
+  const [selectedDate, setSelectedDate] = React.useState<string | null>(
+    initialExpenseDate ?? null,
   );
-  const [isDateFocused, setIsDateFocused] = React.useState(false);
+  const today = useLocalToday();
+  const expenseDate = selectedDate ?? today;
   const [errors, setErrors] = React.useState<FormErrors>({});
   const [isValid, setIsValid] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -275,61 +292,19 @@ export function ExpenseForm({
 
         <SimpleGrid columns={{ base: 1, sm: 2 }} gap="4">
           <Field.Root gap="2" invalid={Boolean(errors.expenseDate)}>
-            <Field.Label {...labelProps}>
-              Date
-              <RequiredMark />
-            </Field.Label>
-            <Box position="relative" w="full">
-              <Input
-                {...controlStyles}
-                type="date"
-                w="full"
-                ps="3"
-                pe="10"
-                aria-label="Date"
-                aria-required="true"
-                value={expenseDate}
-                onChange={(event) => setExpenseDate(event.target.value)}
-                onFocus={() => setIsDateFocused(true)}
-                onBlur={() => setIsDateFocused(false)}
-                color={isDateFocused ? COLORS.text : "transparent"}
-                css={{
-                  colorScheme: "light",
-                  "&::-webkit-calendar-picker-indicator": {
-                    position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
-                    opacity: 0,
-                    cursor: "pointer",
-                  },
-                }}
-              />
-              {!isDateFocused ? (
-                <Text
-                  position="absolute"
-                  left="3"
-                  top="50%"
-                  transform="translateY(-50%)"
-                  fontSize="sm"
-                  color={expenseDate ? COLORS.text : COLORS.subtle}
-                  pointerEvents="none"
-                >
-                  {expenseDate ? formatDate(expenseDate) : "Select date"}
-                </Text>
-              ) : null}
-              <Box
-                position="absolute"
-                right="3"
-                top="50%"
-                transform="translateY(-50%)"
-                color={COLORS.muted}
-                pointerEvents="none"
-                aria-hidden="true"
-              >
-                <CalendarIcon />
-              </Box>
-            </Box>
+            <DatePickerField
+              label={
+                <>
+                  Date
+                  <RequiredMark />
+                </>
+              }
+              labelProps={labelProps}
+              value={expenseDate}
+              onChange={setSelectedDate}
+              invalid={Boolean(errors.expenseDate)}
+              required
+            />
             {errors.expenseDate ? (
               <Field.ErrorText {...errorTextStyles}>
                 {errors.expenseDate}
