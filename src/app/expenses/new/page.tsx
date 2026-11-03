@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 
-
 import { ExpenseEditor } from "../components/expense-editor";
 
 export const metadata: Metadata = {
