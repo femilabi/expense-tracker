@@ -22,7 +22,6 @@ import type { Category } from "@/lib/categories";
 import { COLORS } from "@/components/shared/colors";
 import { CloseIcon } from "@/components/shared/icons";
 import {
-  controlGroupStyles,
   controlStyles,
   dialogSurfaceStyles,
   errorTextStyles,
@@ -46,7 +45,6 @@ export type BudgetDialogMode =
 interface BudgetDialogProps {
   open: boolean;
   mode: BudgetDialogMode | null;
-  currency: string;
   monthLabel: string;
   onClose: () => void;
   /** Rejects when saving fails; the dialog then stays open. */
@@ -56,7 +54,6 @@ interface BudgetDialogProps {
 export function BudgetDialog({
   open,
   mode,
-  currency,
   monthLabel,
   onClose,
   onSubmit,
@@ -123,7 +120,6 @@ export function BudgetDialog({
             <BudgetForm
               key={mode.kind === "edit" ? mode.category.value : "add"}
               mode={mode}
-              currency={currency}
               onSubmit={onSubmit}
               onCancel={onClose}
             />
@@ -136,7 +132,6 @@ export function BudgetDialog({
 
 interface BudgetFormProps {
   mode: BudgetDialogMode;
-  currency: string;
   onSubmit: (category: Category, amount: string) => Promise<void>;
   onCancel: () => void;
 }
@@ -149,7 +144,7 @@ const labelProps = {
   color: COLORS.text,
 } as const;
 
-function BudgetForm({ mode, currency, onSubmit, onCancel }: BudgetFormProps) {
+function BudgetForm({ mode, onSubmit, onCancel }: BudgetFormProps) {
   const isEditing = mode.kind === "edit";
   const [category, setCategory] = React.useState<Category | null>(
     isEditing ? mode.category.value : null,
@@ -211,42 +206,20 @@ function BudgetForm({ mode, currency, onSubmit, onCancel }: BudgetFormProps) {
 
       <Field.Root gap="2" invalid={Boolean(errors.amount)}>
         <Field.Label {...labelProps}>Monthly budget</Field.Label>
-        <Flex align="center" {...controlGroupStyles}>
-          <Input
-            type="number"
-            step="0.01"
-            min="0.01"
-            inputMode="decimal"
-            borderWidth="0"
-            bg="transparent"
-            color={COLORS.text}
-            h="full"
-            px="3"
-            fontSize="sm"
-            placeholder="0.00"
-            autoFocus={isEditing}
-            fontVariantNumeric="tabular-nums"
-            _placeholder={{ color: COLORS.subtle }}
-            _focusVisible={{ outline: "none", boxShadow: "none" }}
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-          />
-          <Box
-            h="6"
-            borderLeftWidth="1px"
-            borderColor={COLORS.border}
-            flexShrink={0}
-          />
-          <Text
-            px="3"
-            fontSize="sm"
-            fontWeight="medium"
-            color={COLORS.muted}
-            flexShrink={0}
-          >
-            {currency}
-          </Text>
-        </Flex>
+        <Input
+          {...controlStyles}
+          type="number"
+          step="0.01"
+          min="0.01"
+          inputMode="decimal"
+          px="3"
+          placeholder="0.00"
+          autoFocus={isEditing}
+          fontVariantNumeric="tabular-nums"
+          _placeholder={{ color: COLORS.subtle }}
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
+        />
         {errors.amount ? (
           <Field.ErrorText {...errorTextStyles}>
             {errors.amount}

@@ -257,7 +257,6 @@ export function BudgetOverview({
       <BudgetDialog
         open={isDialogOpen}
         mode={dialogMode}
-        currency={currency}
         monthLabel={monthLabel}
         onClose={() => setIsDialogOpen(false)}
         onSubmit={handleSave}

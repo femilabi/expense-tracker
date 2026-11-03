@@ -18,14 +18,13 @@ export default async function ExpensesPage() {
   await connection();
 
   const user = await getCurrentUser();
-  const { expenses, currency } = await getUserExpenses(user.id);
+  const { expenses } = await getUserExpenses(user.id);
   const now = new Date();
 
   return (
     <ExpensesHistory
       referenceDate={toLocalDateKey(now)}
       initialExpenses={expenses}
-      defaultCurrency={currency}
     />
   );
 }

@@ -22,10 +22,6 @@ import {
   type Category,
 } from "@/app/expenses/expense-form/constants/categories";
 import {
-  CURRENCY_OPTIONS,
-  type Currency,
-} from "@/app/expenses/expense-form/constants/currencies";
-import {
   expenseSchema,
   type ExpenseInput,
 } from "@/app/expenses/expense-form/expense-schema";
@@ -35,7 +31,6 @@ import { COLORS } from "@/components/shared/colors";
 import { DatePickerField } from "@/components/shared/date-picker-field";
 import { CloseIcon } from "@/components/shared/icons";
 import {
-  controlGroupStyles,
   controlStyles,
   errorTextStyles,
   focusRing,
@@ -47,7 +42,6 @@ import {
 
 export interface ExpenseFormProps {
   initialCategory?: Category;
-  initialCurrency?: Currency;
   initialAmount?: string;
   initialDescription?: string;
   initialExpenseDate?: string;
@@ -58,10 +52,7 @@ export interface ExpenseFormProps {
 }
 
 type FormErrors = Partial<
-  Record<
-    "category" | "currency" | "amount" | "description" | "expenseDate",
-    string
-  >
+  Record<"category" | "amount" | "description" | "expenseDate", string>
 >;
 
 const labelProps = {
@@ -100,7 +91,6 @@ function RequiredMark() {
 
 export function ExpenseForm({
   initialCategory,
-  initialCurrency,
   initialAmount,
   initialDescription,
   initialExpenseDate,
@@ -110,9 +100,6 @@ export function ExpenseForm({
   onCancel,
 }: ExpenseFormProps) {
   const [amount, setAmount] = React.useState(initialAmount ?? "");
-  const [currency, setCurrency] = React.useState<Currency>(
-    initialCurrency ?? "USD",
-  );
   const [category, setCategory] = React.useState<Category | null>(
     initialCategory ?? null,
   );
@@ -143,7 +130,6 @@ export function ExpenseForm({
 
     const result = expenseSchema.safeParse({
       category: category ?? undefined,
-      currency,
       amount,
       description,
       expenseDate,
@@ -155,7 +141,6 @@ export function ExpenseForm({
         const field = issue.path[0];
         if (
           field === "category" ||
-          field === "currency" ||
           field === "amount" ||
           field === "description" ||
           field === "expenseDate"
@@ -224,68 +209,22 @@ export function ExpenseForm({
             Amount
             <RequiredMark />
           </Field.Label>
-          <Flex align="center" {...controlGroupStyles}>
-            <Input
-              type="number"
-              step="any"
-              inputMode="decimal"
-              borderWidth="0"
-              bg="transparent"
-              color={COLORS.text}
-              h="full"
-              px="3"
-              fontSize="sm"
-              placeholder="0.00"
-              aria-label="Amount"
-              aria-required="true"
-              _placeholder={{ color: COLORS.subtle }}
-              _focusVisible={{ outline: "none", boxShadow: "none" }}
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-            />
-            <Box
-              h="6"
-              borderLeftWidth="1px"
-              borderColor={COLORS.border}
-              flexShrink={0}
-            />
-            <NativeSelect.Root
-              size="sm"
-              variant="plain"
-              w="20"
-              h="full"
-              flexShrink={0}
-            >
-              <NativeSelect.Field
-                aria-label="Currency"
-                value={currency}
-                onChange={(event) =>
-                  setCurrency(event.target.value as Currency)
-                }
-                h="full"
-                borderWidth="0"
-                bg="transparent"
-                color={COLORS.text}
-                fontSize="sm"
-                fontWeight="medium"
-                ps="3"
-                pe="7"
-                cursor="pointer"
-                _focusVisible={{ outline: "none", boxShadow: "none" }}
-                css={nativeSelectOptionStyles}
-              >
-                {CURRENCY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </NativeSelect.Field>
-              <NativeSelect.Indicator color={COLORS.muted} right="2" />
-            </NativeSelect.Root>
-          </Flex>
-          {errors.amount || errors.currency ? (
+          <Input
+            {...controlStyles}
+            type="number"
+            step="any"
+            inputMode="decimal"
+            px="3"
+            placeholder="0.00"
+            aria-label="Amount"
+            aria-required="true"
+            _placeholder={{ color: COLORS.subtle }}
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+          />
+          {errors.amount ? (
             <Field.ErrorText {...errorTextStyles}>
-              {errors.amount ?? errors.currency}
+              {errors.amount}
             </Field.ErrorText>
           ) : null}
         </Field.Root>
