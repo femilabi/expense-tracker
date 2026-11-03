@@ -22,8 +22,8 @@ export default function ChangeEmailForm() {
   );
 
   return (
-    <form action={formAction}>
-      <Stack gap={4}>
+    <form action={formAction} style={{ display: "flex", flex: 1 }}>
+      <Stack gap={4} flex="1">
         {state?.message ? (
           <Text
             aria-live="polite"
@@ -78,7 +78,7 @@ export default function ChangeEmailForm() {
           type="submit"
           loading={pending}
           loadingText="Sending…"
-          mt={1}
+          mt="auto"
           w="full"
           h={11}
           borderRadius="full"

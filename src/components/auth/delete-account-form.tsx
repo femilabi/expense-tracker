@@ -41,7 +41,8 @@ export default function DeleteAccountForm() {
         type="button"
         onClick={() => setOpen(true)}
         variant="outline"
-        w="full"
+        w={{ base: "full", md: "auto" }}
+        minW={{ md: "48" }}
         borderColor="brand.red"
         color="brand.red"
         {...buttonStyles}
