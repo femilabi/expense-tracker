@@ -34,7 +34,11 @@ export default function LoginForm() {
         ? "Password updated. Please log in again."
         : searchParams.get("reset") === "1"
           ? "Password reset. You can log in with your new password."
-          : null;
+          : searchParams.get("emailChanged") === "1"
+            ? "Email updated. Please log in with your new email."
+            : searchParams.get("emailRestored") === "1"
+              ? "Email restored. Please log in and reset your password."
+              : null;
 
   return (
     <form action={formAction}>
