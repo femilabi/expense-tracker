@@ -4,6 +4,7 @@ import {
   formatPercentUsed,
   getBudgetProgress,
   rankByPercentUsed,
+  summarizeBudgets,
 } from "@/lib/budget-math";
 import {
   monthDateRange,
@@ -133,5 +134,56 @@ describe("month helpers", () => {
 
     expect(start.toISOString()).toBe("2026-02-01T00:00:00.000Z");
     expect(end.toISOString()).toBe("2026-03-01T00:00:00.000Z");
+  });
+});
+
+describe("summarizeBudgets", () => {
+  const item = (budget: number | null, spent: number) => ({
+    progress: getBudgetProgress(budget, spent),
+  });
+
+  it("totals budgeted categories and keeps unbudgeted spending apart", () => {
+    const summary = summarizeBudgets([
+      item(100, 30),
+      item(50, 60),
+      item(null, 40.25),
+      item(null, 0),
+    ]);
+
+    expect(summary.total).toMatchObject({
+      budget: 150,
+      spent: 90,
+      remaining: 60,
+      percentUsed: 60,
+      isOverBudget: false,
+    });
+    expect(summary.budgetedCount).toBe(2);
+    expect(summary.overBudgetCount).toBe(1);
+    expect(summary.unbudgetedSpent).toBe(40.25);
+  });
+
+  it("flags the month as over budget when total spending exceeds it", () => {
+    const summary = summarizeBudgets([item(100, 90), item(50, 80)]);
+
+    expect(summary.total.percentUsed).toBeCloseTo(113.33, 2);
+    expect(summary.total.fill).toBe(100);
+    expect(summary.total.remaining).toBe(-20);
+    expect(summary.total.isOverBudget).toBe(true);
+  });
+
+  it("rounds totals to cents", () => {
+    const summary = summarizeBudgets([item(0.1, 0.1), item(0.2, 0.2)]);
+
+    expect(summary.total.budget).toBe(0.3);
+    expect(summary.total.spent).toBe(0.3);
+  });
+
+  it("reports no budget when nothing is budgeted", () => {
+    const summary = summarizeBudgets([item(null, 25)]);
+
+    expect(summary.total.budget).toBeNull();
+    expect(summary.total.percentUsed).toBeNull();
+    expect(summary.budgetedCount).toBe(0);
+    expect(summary.unbudgetedSpent).toBe(25);
   });
 });

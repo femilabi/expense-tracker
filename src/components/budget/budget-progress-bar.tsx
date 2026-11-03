@@ -30,6 +30,8 @@ export function BudgetProgressBar({ label, progress }: BudgetProgressBarProps) {
         <Progress.Range
           bg={progress.isOverBudget ? COLORS.danger : COLORS.primary}
           borderRadius="full"
+          transition="width 0.3s ease, background-color 0.3s ease"
+          _motionReduce={{ transition: "none" }}
         />
       </Progress.Track>
     </Progress.Root>

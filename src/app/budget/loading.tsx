@@ -21,13 +21,26 @@ export default function Loading() {
           gap={4}
         >
           <Box>
-            <Skeleton h="8" w="40" bg={COLORS.border} />
+            <Skeleton h="8" w="32" bg={COLORS.border} />
             <Skeleton mt={3} h="4" w="72" maxW="full" bg={COLORS.border} />
           </Box>
-          <Skeleton h="10" w="56" borderRadius="lg" bg={COLORS.border} />
+          <Skeleton h="10" w="32" borderRadius="lg" bg={COLORS.border} />
         </Flex>
 
-        <Skeleton h="96" borderRadius="xl" bg={COLORS.border} />
+        <Stack gap={4}>
+          <Skeleton
+            h={{ base: "64", xl: "28" }}
+            borderRadius="xl"
+            bg={COLORS.border}
+          />
+          <Skeleton
+            h="10"
+            w={{ base: "full", sm: "56" }}
+            borderRadius="lg"
+            bg={COLORS.border}
+          />
+          <Skeleton h="80" borderRadius="xl" bg={COLORS.border} />
+        </Stack>
       </Stack>
     </Box>
   );

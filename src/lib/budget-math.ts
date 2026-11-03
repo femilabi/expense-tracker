@@ -42,6 +42,49 @@ export function getBudgetProgress(
   };
 }
 
+export interface BudgetSummary {
+  /** Totals across budgeted categories only. */
+  total: BudgetProgress;
+  budgetedCount: number;
+  overBudgetCount: number;
+  /** Spending in categories that have no budget. */
+  unbudgetedSpent: number;
+}
+
+export function summarizeBudgets(
+  items: readonly { progress: BudgetProgress }[],
+): BudgetSummary {
+  let budgeted = 0;
+  let spent = 0;
+  let unbudgetedSpent = 0;
+  let budgetedCount = 0;
+  let overBudgetCount = 0;
+
+  for (const { progress } of items) {
+    if (progress.budget === null) {
+      unbudgetedSpent += progress.spent;
+      continue;
+    }
+
+    budgeted += progress.budget;
+    spent += progress.spent;
+    budgetedCount += 1;
+    if (progress.isOverBudget) {
+      overBudgetCount += 1;
+    }
+  }
+
+  return {
+    total: getBudgetProgress(
+      budgetedCount > 0 ? roundToCents(budgeted) : null,
+      roundToCents(spent),
+    ),
+    budgetedCount,
+    overBudgetCount,
+    unbudgetedSpent: roundToCents(unbudgetedSpent),
+  };
+}
+
 export function formatPercentUsed(percentUsed: number): string {
   return `${Math.round(percentUsed)}%`;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Dialog, Flex } from "@chakra-ui/react";
+import { Box, Button, Dialog, Flex, Text } from "@chakra-ui/react";
 
 import type { CategoryBudget } from "@/lib/budgets";
 import { formatCurrency } from "@/lib/format";
@@ -12,32 +12,30 @@ import {
   secondaryButtonStyles,
 } from "@/components/shared/styles";
 
-interface RemoveBudgetDialogProps {
+interface DeleteBudgetDialogProps {
   open: boolean;
   item: CategoryBudget | null;
   currency: string;
   monthLabel: string;
-  isRemoving: boolean;
+  isDeleting: boolean;
   onClose: () => void;
   onConfirm: () => void;
 }
 
-export function RemoveBudgetDialog({
+export function DeleteBudgetDialog({
   open,
   item,
   currency,
   monthLabel,
-  isRemoving,
+  isDeleting,
   onClose,
   onConfirm,
-}: RemoveBudgetDialogProps) {
-  const budget = item?.progress.budget;
-
+}: DeleteBudgetDialogProps) {
   return (
     <Dialog.Root
       open={open}
       onOpenChange={(details) => {
-        if (!details.open && !isRemoving) {
+        if (!details.open && !isDeleting) {
           onClose();
         }
       }}
@@ -56,19 +54,47 @@ export function RemoveBudgetDialog({
             letterSpacing="tight"
             color={COLORS.text}
           >
-            Remove {item?.label} budget?
+            Delete budget?
           </Dialog.Title>
           <Dialog.Description mt={2} fontSize="sm" color={COLORS.muted}>
-            {budget != null
-              ? `The ${formatCurrency(budget, currency)} budget for ${monthLabel} will be removed. Your expenses are not affected.`
-              : "This budget will be removed. Your expenses are not affected."}
+            This removes the budget for this month only. Your expenses are not
+            affected.
           </Dialog.Description>
+
+          {item?.progress.budget != null ? (
+            <Box
+              mt={5}
+              py={4}
+              borderTopWidth="1px"
+              borderBottomWidth="1px"
+              borderColor={COLORS.border}
+            >
+              <Flex align="flex-start" justify="space-between" gap={4}>
+                <Box minW={0}>
+                  <Text fontWeight="medium" color={COLORS.text}>
+                    {item.label}
+                  </Text>
+                  <Text mt={1.5} fontSize="sm" color={COLORS.muted}>
+                    {monthLabel}
+                  </Text>
+                </Box>
+                <Text
+                  flexShrink={0}
+                  fontWeight="semibold"
+                  color={COLORS.text}
+                  fontVariantNumeric="tabular-nums"
+                >
+                  {formatCurrency(item.progress.budget, currency)}
+                </Text>
+              </Flex>
+            </Box>
+          ) : null}
 
           <Flex mt={6} justify="flex-end" gap={3}>
             <Button
               type="button"
               onClick={onClose}
-              disabled={isRemoving}
+              disabled={isDeleting}
               {...secondaryButtonStyles}
             >
               Cancel
@@ -76,11 +102,11 @@ export function RemoveBudgetDialog({
             <Button
               type="button"
               onClick={onConfirm}
-              loading={isRemoving}
-              loadingText="Removing…"
+              loading={isDeleting}
+              loadingText="Deleting…"
               {...dangerButtonStyles}
             >
-              Remove budget
+              Delete budget
             </Button>
           </Flex>
         </Dialog.Content>

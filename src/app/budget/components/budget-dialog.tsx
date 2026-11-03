@@ -2,50 +2,66 @@
 
 import * as React from "react";
 import {
+  Box,
   Button,
+  createListCollection,
   Dialog,
   Field,
+  Flex,
+  Heading,
   HStack,
+  IconButton,
   Input,
+  Select,
   Text,
   VStack,
 } from "@chakra-ui/react";
 
-import type { CategoryBudget } from "@/lib/budgets";
+import type { Category } from "@/lib/categories";
 
 import { COLORS } from "@/components/shared/colors";
+import { CloseIcon } from "@/components/shared/icons";
 import {
+  controlGroupStyles,
   controlStyles,
   dialogSurfaceStyles,
   errorTextStyles,
+  focusRing,
   primaryButtonStyles,
   secondaryButtonStyles,
 } from "@/components/shared/styles";
 
 import { budgetAmountSchema } from "../budget-schema";
 
+export interface CategoryChoice {
+  value: Category;
+  label: string;
+}
+
+/** Add offers the categories without a budget; edit is locked to one. */
+export type BudgetDialogMode =
+  | { kind: "add"; choices: CategoryChoice[] }
+  | { kind: "edit"; category: CategoryChoice; amount: number };
+
 interface BudgetDialogProps {
   open: boolean;
-  item: CategoryBudget | null;
+  mode: BudgetDialogMode | null;
   currency: string;
   monthLabel: string;
   onClose: () => void;
   /** Rejects when saving fails; the dialog then stays open. */
-  onSubmit: (amount: string) => Promise<void>;
+  onSubmit: (category: Category, amount: string) => Promise<void>;
 }
 
 export function BudgetDialog({
   open,
-  item,
+  mode,
   currency,
   monthLabel,
   onClose,
   onSubmit,
 }: BudgetDialogProps) {
-  const isEditing = item?.progress.budget != null;
-  const title = item
-    ? `${isEditing ? "Edit" : "Set"} ${item.label} budget`
-    : "Set budget";
+  const title = mode?.kind === "edit" ? "Edit budget" : "Add budget";
 
   return (
     <Dialog.Root
@@ -62,29 +78,52 @@ export function BudgetDialog({
     >
       <Dialog.Backdrop bg={COLORS.backdrop} />
       <Dialog.Positioner p={4}>
-        <Dialog.Content {...dialogSurfaceStyles} w="full" maxW="24rem">
-          <Dialog.Title
-            fontSize="lg"
-            fontWeight="semibold"
-            letterSpacing="tight"
-            color={COLORS.text}
-          >
-            {title}
-          </Dialog.Title>
-          <Dialog.Description mt={1} fontSize="sm" color={COLORS.muted}>
-            {monthLabel}
-          </Dialog.Description>
+        <Dialog.Content
+          {...dialogSurfaceStyles}
+          w="full"
+          maxW="27rem"
+          maxH="calc(100dvh - 2rem)"
+          overflowY="auto"
+        >
+          <Flex align="flex-start" justify="space-between" gap={3}>
+            <Box>
+              <Dialog.Title asChild>
+                <Heading
+                  as="h2"
+                  fontSize="lg"
+                  fontWeight="semibold"
+                  letterSpacing="tight"
+                  color={COLORS.text}
+                >
+                  {title}
+                </Heading>
+              </Dialog.Title>
+              <Dialog.Description mt={1} fontSize="sm" color={COLORS.muted}>
+                {monthLabel}
+              </Dialog.Description>
+            </Box>
+            <Dialog.CloseTrigger asChild position="static">
+              <IconButton
+                type="button"
+                aria-label="Close"
+                title="Close"
+                size="sm"
+                variant="ghost"
+                flexShrink={0}
+                color={COLORS.muted}
+                _hover={{ bg: COLORS.raised, color: COLORS.text }}
+                _focusVisible={focusRing}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Dialog.CloseTrigger>
+          </Flex>
 
-          {item ? (
-            <BudgetAmountForm
-              key={item.category}
-              initialAmount={
-                item.progress.budget === null
-                  ? ""
-                  : String(item.progress.budget)
-              }
+          {mode ? (
+            <BudgetForm
+              key={mode.kind === "edit" ? mode.category.value : "add"}
+              mode={mode}
               currency={currency}
-              submitLabel={isEditing ? "Save changes" : "Save budget"}
               onSubmit={onSubmit}
               onCancel={onClose}
             />
@@ -95,23 +134,30 @@ export function BudgetDialog({
   );
 }
 
-interface BudgetAmountFormProps {
-  initialAmount: string;
+interface BudgetFormProps {
+  mode: BudgetDialogMode;
   currency: string;
-  submitLabel: string;
-  onSubmit: (amount: string) => Promise<void>;
+  onSubmit: (category: Category, amount: string) => Promise<void>;
   onCancel: () => void;
 }
 
-function BudgetAmountForm({
-  initialAmount,
-  currency,
-  submitLabel,
-  onSubmit,
-  onCancel,
-}: BudgetAmountFormProps) {
-  const [amount, setAmount] = React.useState(initialAmount);
-  const [error, setError] = React.useState<string | null>(null);
+type FormErrors = Partial<Record<"category" | "amount", string>>;
+
+const labelProps = {
+  fontSize: "sm",
+  fontWeight: "medium",
+  color: COLORS.text,
+} as const;
+
+function BudgetForm({ mode, currency, onSubmit, onCancel }: BudgetFormProps) {
+  const isEditing = mode.kind === "edit";
+  const [category, setCategory] = React.useState<Category | null>(
+    isEditing ? mode.category.value : null,
+  );
+  const [amount, setAmount] = React.useState(
+    isEditing ? String(mode.amount) : "",
+  );
+  const [errors, setErrors] = React.useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -121,17 +167,23 @@ function BudgetAmountForm({
       return;
     }
 
-    const result = budgetAmountSchema.safeParse(amount);
+    const amountResult = budgetAmountSchema.safeParse(amount);
+    const nextErrors: FormErrors = {
+      category: category ? undefined : "Select a category",
+      amount: amountResult.success
+        ? undefined
+        : amountResult.error.issues[0]?.message,
+    };
 
-    if (!result.success) {
-      setError(result.error.issues[0]?.message ?? "Enter a valid amount");
+    if (!category || !amountResult.success) {
+      setErrors(nextErrors);
       return;
     }
 
-    setError(null);
+    setErrors({});
     setIsSubmitting(true);
     try {
-      await onSubmit(result.data);
+      await onSubmit(category, amountResult.data);
     } catch {
       // The caller reports the failure; keep the form open for another try.
     } finally {
@@ -140,31 +192,69 @@ function BudgetAmountForm({
   };
 
   return (
-    <VStack as="form" mt={5} gap={5} align="stretch" onSubmit={handleSubmit}>
-      <Field.Root gap="2" invalid={Boolean(error)}>
-        <Field.Label fontSize="sm" fontWeight="medium" color={COLORS.text}>
-          Monthly amount
-          <Text as="span" ml={1} fontSize="xs" color={COLORS.subtle}>
+    <VStack as="form" mt={5} gap={4} align="stretch" onSubmit={handleSubmit}>
+      {mode.kind === "edit" ? (
+        <Box>
+          <Text {...labelProps}>Category</Text>
+          <Text mt={2} fontSize="sm" color={COLORS.text}>
+            {mode.category.label}
+          </Text>
+        </Box>
+      ) : (
+        <CategorySelect
+          choices={mode.choices}
+          value={category}
+          error={errors.category}
+          onChange={setCategory}
+        />
+      )}
+
+      <Field.Root gap="2" invalid={Boolean(errors.amount)}>
+        <Field.Label {...labelProps}>Monthly budget</Field.Label>
+        <Flex align="center" {...controlGroupStyles}>
+          <Input
+            type="number"
+            step="0.01"
+            min="0.01"
+            inputMode="decimal"
+            borderWidth="0"
+            bg="transparent"
+            color={COLORS.text}
+            h="full"
+            px="3"
+            fontSize="sm"
+            placeholder="0.00"
+            autoFocus={isEditing}
+            fontVariantNumeric="tabular-nums"
+            _placeholder={{ color: COLORS.subtle }}
+            _focusVisible={{ outline: "none", boxShadow: "none" }}
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+          />
+          <Box
+            h="6"
+            borderLeftWidth="1px"
+            borderColor={COLORS.border}
+            flexShrink={0}
+          />
+          <Text
+            px="3"
+            fontSize="sm"
+            fontWeight="medium"
+            color={COLORS.muted}
+            flexShrink={0}
+          >
             {currency}
           </Text>
-        </Field.Label>
-        <Input
-          {...controlStyles}
-          type="number"
-          step="0.01"
-          min="0.01"
-          inputMode="decimal"
-          placeholder="0.00"
-          autoFocus
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-        />
-        {error ? (
-          <Field.ErrorText {...errorTextStyles}>{error}</Field.ErrorText>
+        </Flex>
+        {errors.amount ? (
+          <Field.ErrorText {...errorTextStyles}>
+            {errors.amount}
+          </Field.ErrorText>
         ) : null}
       </Field.Root>
 
-      <HStack gap={3} align="stretch">
+      <HStack gap={3} mt={1} align="stretch">
         <Button
           type="button"
           flex="0 0 34%"
@@ -181,9 +271,84 @@ function BudgetAmountForm({
           disabled={isSubmitting}
           {...primaryButtonStyles}
         >
-          {submitLabel}
+          {isEditing ? "Save changes" : "Save budget"}
         </Button>
       </HStack>
     </VStack>
+  );
+}
+
+interface CategorySelectProps {
+  choices: CategoryChoice[];
+  value: Category | null;
+  error: string | undefined;
+  onChange: (category: Category | null) => void;
+}
+
+function CategorySelect({
+  choices,
+  value,
+  error,
+  onChange,
+}: CategorySelectProps) {
+  const collection = React.useMemo(
+    () => createListCollection({ items: choices }),
+    [choices],
+  );
+
+  return (
+    <Field.Root gap="2" invalid={Boolean(error)}>
+      <Select.Root
+        collection={collection}
+        value={value ? [value] : []}
+        onValueChange={(details) => onChange(details.items[0]?.value ?? null)}
+        positioning={{ sameWidth: true }}
+        w="full"
+        gap="2"
+      >
+        <Select.HiddenSelect />
+        <Select.Label {...labelProps}>Category</Select.Label>
+        <Select.Control>
+          <Select.Trigger {...controlStyles} px="3" pe="9" cursor="pointer">
+            <Select.ValueText
+              placeholder="Select category"
+              color={value ? COLORS.text : COLORS.subtle}
+            />
+          </Select.Trigger>
+          <Select.IndicatorGroup pe="3">
+            <Select.Indicator color={COLORS.muted} />
+          </Select.IndicatorGroup>
+        </Select.Control>
+        <Select.Positioner>
+          <Select.Content
+            bg={COLORS.card}
+            borderWidth="1px"
+            borderColor={COLORS.border}
+            borderRadius="lg"
+            boxShadow="md"
+            p={1}
+          >
+            {collection.items.map((choice) => (
+              <Select.Item
+                key={choice.value}
+                item={choice}
+                px={3}
+                py={2}
+                fontSize="sm"
+                color={COLORS.text}
+                borderRadius="md"
+                _highlighted={{ bg: COLORS.raised }}
+              >
+                {choice.label}
+                <Select.ItemIndicator color={COLORS.link} />
+              </Select.Item>
+            ))}
+          </Select.Content>
+        </Select.Positioner>
+      </Select.Root>
+      {error ? (
+        <Field.ErrorText {...errorTextStyles}>{error}</Field.ErrorText>
+      ) : null}
+    </Field.Root>
   );
 }

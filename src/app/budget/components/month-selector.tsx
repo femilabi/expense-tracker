@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HStack, IconButton, Text } from "@chakra-ui/react";
+import { Flex, IconButton, Text } from "@chakra-ui/react";
 
 import { formatMonth } from "@/lib/format";
 import {
@@ -11,7 +11,7 @@ import {
 
 import { COLORS } from "@/components/shared/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/shared/icons";
-import { secondaryButtonStyles } from "@/components/shared/styles";
+import { controlGroupStyles, focusRing } from "@/components/shared/styles";
 
 interface MonthSelectorProps {
   month: CalendarMonth;
@@ -21,38 +21,56 @@ function monthHref(month: CalendarMonth): string {
   return `/budget?month=${toMonthKey(month)}`;
 }
 
-export function MonthSelector({ month }: MonthSelectorProps) {
-  const previous = shiftMonth(month, -1);
-  const next = shiftMonth(month, 1);
+function MonthStepButton({
+  month,
+  direction,
+}: {
+  month: CalendarMonth;
+  direction: "previous" | "next";
+}) {
+  const label = `${direction === "previous" ? "Previous" : "Next"} month, ${formatMonth(monthStart(month))}`;
 
   return (
-    <HStack as="nav" gap={2} aria-label="Budget month" flexShrink={0}>
-      <IconButton asChild {...secondaryButtonStyles} px={0}>
-        <Link
-          href={monthHref(previous)}
-          aria-label={`Previous month, ${formatMonth(monthStart(previous))}`}
-        >
-          <ChevronLeftIcon />
-        </Link>
-      </IconButton>
+    <IconButton
+      asChild
+      size="sm"
+      variant="ghost"
+      color={COLORS.muted}
+      _hover={{ bg: COLORS.raised, color: COLORS.text }}
+      _focusVisible={focusRing}
+    >
+      <Link href={monthHref(month)} aria-label={label} title={label}>
+        {direction === "previous" ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+      </Link>
+    </IconButton>
+  );
+}
+
+export function MonthSelector({ month }: MonthSelectorProps) {
+  return (
+    <Flex
+      as="nav"
+      aria-label="Budget month"
+      align="center"
+      justify="space-between"
+      w={{ base: "full", sm: "auto" }}
+      px={1}
+      gap={1}
+      {...controlGroupStyles}
+    >
+      <MonthStepButton month={shiftMonth(month, -1)} direction="previous" />
       <Text
         minW="36"
         textAlign="center"
         fontSize="sm"
-        fontWeight="semibold"
+        fontWeight="medium"
         color={COLORS.text}
+        fontVariantNumeric="tabular-nums"
         aria-live="polite"
       >
         {formatMonth(monthStart(month))}
       </Text>
-      <IconButton asChild {...secondaryButtonStyles} px={0}>
-        <Link
-          href={monthHref(next)}
-          aria-label={`Next month, ${formatMonth(monthStart(next))}`}
-        >
-          <ChevronRightIcon />
-        </Link>
-      </IconButton>
-    </HStack>
+      <MonthStepButton month={shiftMonth(month, 1)} direction="next" />
+    </Flex>
   );
 }

@@ -135,3 +135,17 @@ export const tableHeaderStyles = {
   fontSize: "11px",
   py: 3,
 } as const;
+
+/** Bordered box that wraps a borderless input plus an attached addon. */
+export const controlGroupStyles = {
+  h: { base: "11", sm: "10" },
+  bg: COLORS.card,
+  borderWidth: "1px",
+  borderColor: COLORS.border,
+  rounded: "lg",
+  _hover: { borderColor: COLORS.borderStrong },
+  _focusWithin: {
+    borderColor: COLORS.focus,
+    ...focusRing,
+  },
+} as const;

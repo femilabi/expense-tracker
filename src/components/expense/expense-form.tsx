@@ -34,6 +34,7 @@ import { formatDate } from "@/app/expenses/utils";
 import { COLORS } from "@/components/shared/colors";
 import { CalendarIcon, CloseIcon } from "@/components/shared/icons";
 import {
+  controlGroupStyles,
   controlStyles,
   errorTextStyles,
   focusRing,
@@ -66,19 +67,6 @@ const labelProps = {
   fontSize: "sm",
   fontWeight: "medium",
   color: COLORS.text,
-} as const;
-
-const amountGroupStyles = {
-  h: { base: "11", sm: "10" },
-  bg: COLORS.card,
-  borderWidth: "1px",
-  borderColor: COLORS.border,
-  rounded: "lg",
-  _hover: { borderColor: COLORS.borderStrong },
-  _focusWithin: {
-    borderColor: COLORS.focus,
-    ...focusRing,
-  },
 } as const;
 
 function RequiredMark() {
@@ -219,7 +207,7 @@ export function ExpenseForm({
             Amount
             <RequiredMark />
           </Field.Label>
-          <Flex align="center" {...amountGroupStyles}>
+          <Flex align="center" {...controlGroupStyles}>
             <Input
               type="number"
               step="any"
