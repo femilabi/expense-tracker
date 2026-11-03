@@ -10,6 +10,7 @@ import {
 } from "@chakra-ui/react";
 
 import { logout } from "@/lib/actions/auth";
+import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
 export const instant = false;
@@ -34,7 +35,13 @@ export default async function DashboardLayout({
   await connection();
 
   const user = await getCurrentUser();
-  const displayName = user.name;
+  const profile = await prisma.profile.findUnique({
+    where: { userId: user.id },
+    select: { firstName: true, lastName: true },
+  });
+  const displayName = [profile?.firstName, profile?.lastName]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <Flex direction="column" flex="1" bg="bg.subtle">
@@ -95,18 +102,20 @@ export default async function DashboardLayout({
           <Flex align="center" gap={3}>
             <Flex align="center" gap={2} minW={0}>
               <Avatar.Root size="sm" colorPalette="teal">
-                <Avatar.Fallback name={displayName} />
+                <Avatar.Fallback name={displayName || undefined} />
               </Avatar.Root>
-              <Text
-                fontSize="sm"
-                color="fg"
-                fontWeight="medium"
-                maxW="12rem"
-                truncate
-                display={{ base: "none", md: "block" }}
-              >
-                {displayName}
-              </Text>
+              {displayName ? (
+                <Text
+                  fontSize="sm"
+                  color="fg"
+                  fontWeight="medium"
+                  maxW="12rem"
+                  truncate
+                  display={{ base: "none", md: "block" }}
+                >
+                  {displayName}
+                </Text>
+              ) : null}
             </Flex>
 
             <form action={logout}>
