@@ -10,14 +10,12 @@ import { getCurrentUser } from "@/lib/session";
 export type ProfileFormValues = {
   firstName: string;
   lastName: string;
-  avatarUrl: string;
   currency: string;
 };
 
 export type ProfileFormErrors = Partial<{
   firstName: string[];
   lastName: string[];
-  avatarUrl: string[];
   currency: string[];
 }>;
 
@@ -44,13 +42,6 @@ const profileSchema = z.object({
     .transform((value) => value || "")
     .optional()
     .default(""),
-  avatarUrl: z
-    .string()
-    .trim()
-    .max(500, { error: "Avatar URL must be 500 characters or fewer." })
-    .optional()
-    .transform((value) => (value ? value : ""))
-    .default(""),
   currency: z.enum(CURRENCY_CODES, {
     error: "Please select a valid currency.",
   }),
@@ -60,7 +51,6 @@ function readValues(formData: FormData): ProfileFormValues {
   return {
     firstName: String(formData.get("firstName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
-    avatarUrl: String(formData.get("avatarUrl") ?? ""),
     currency: String(formData.get("currency") ?? "USD"),
   };
 }
@@ -80,21 +70,19 @@ export async function updateProfile(
     };
   }
 
-  const { firstName, lastName, avatarUrl, currency } = parsed.data;
+  const { firstName, lastName, currency } = parsed.data;
 
   await prisma.profile.upsert({
     where: { userId: user.id },
     update: {
       firstName: firstName || null,
       lastName: lastName || null,
-      avatarUrl: avatarUrl || null,
       currency,
     },
     create: {
       userId: user.id,
       firstName: firstName || null,
       lastName: lastName || null,
-      avatarUrl: avatarUrl || null,
       currency,
     },
   });
@@ -106,7 +94,6 @@ export async function updateProfile(
     values: {
       firstName,
       lastName,
-      avatarUrl,
       currency,
     },
     message: "Profile updated successfully.",
