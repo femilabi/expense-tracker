@@ -1,19 +1,11 @@
 "use client";
 
-import {
-  Box,
-  Flex,
-  Grid,
-  Heading,
-  Link as ChakraLink,
-  Progress,
-  Text,
-} from "@chakra-ui/react";
-import Link from "next/link";
+import { Box, Flex, Grid, Heading, Text } from "@chakra-ui/react";
 
 import type { BudgetMonth } from "@/lib/budgets";
 import type { RecentTransaction } from "@/lib/recent-transactions";
 
+import { BudgetProgressCard } from "./budget-progress-card";
 import { RecentTransactionsCard } from "./recent-transactions-card";
 import { SpendingCategoriesCard } from "./spending-categories-card";
 
@@ -33,8 +25,8 @@ interface DashboardSectionsProps {
 }
 
 /**
- * Chart, budget and transaction sections. The categories and recent
- * transactions cards are live; the trend chart and budget progress are not.
+ * Chart, budget and transaction sections. The budget and transaction cards
+ * are live; the trend chart still uses sample data.
  */
 export function DashboardSections({
   budgetMonth,
@@ -105,52 +97,7 @@ export function DashboardSections({
       >
         <SpendingCategoriesCard budgetMonth={budgetMonth} />
 
-        {/* Budget Progress */}
-        <Box
-          bg="bg.panel"
-          p="6"
-          borderRadius="2xl"
-          shadow="md"
-          border="1px solid"
-          borderColor="border"
-        >
-          <Flex justify="space-between" align="center" mb="6">
-            <Heading size="lg" color="fg">
-              Budget progress
-            </Heading>
-            <ChakraLink
-              asChild
-              css={{
-                fontSize: "sm",
-                fontWeight: "semibold",
-                color: "brand.fg",
-                "&:hover": { textDecoration: "underline" },
-              }}
-            >
-              <Link href="/expenses">Expenses</Link>
-            </ChakraLink>
-          </Flex>
-
-          <Box>
-            <Flex justify="space-between" mb="3">
-              <Text color="fg.muted">R8,500 of R10,000 used</Text>
-
-              <Text fontWeight="bold" color="fg.success">
-                85%
-              </Text>
-            </Flex>
-
-            <Progress.Root value={85} colorPalette="success" size="lg">
-              <Progress.Track>
-                <Progress.Range />
-              </Progress.Track>
-            </Progress.Root>
-
-            <Text mt="4" css={{ fontSize: "sm", color: "fg.muted" }}>
-              85% of monthly budget used
-            </Text>
-          </Box>
-        </Box>
+        <BudgetProgressCard budgetMonth={budgetMonth} />
       </Grid>
 
       <RecentTransactionsCard
