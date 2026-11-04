@@ -8,9 +8,13 @@ import { CATEGORY_BY_VALUE, type Category } from "@/lib/categories";
 import { resolveCurrency, toExpenseRecord } from "@/lib/expenses";
 import { formatShortMonth } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import {
+  mergeRecentTransactions,
+  RECENT_TRANSACTION_LIMIT,
+  type RecentTransaction,
+} from "@/lib/recent-transactions";
 
 const TREND_MONTHS = 6;
-const RECENT_LIMIT = 8;
 
 export interface DashboardSummary {
   currency: string;
@@ -41,25 +45,13 @@ export interface MonthlyPoint {
   expenses: number;
 }
 
-export interface RecentExpense {
-  id: string;
-  category: Category;
-  label: string;
-  emoji: string;
-  tint: string;
-  color: string;
-  amount: number;
-  description: string | null;
-  date: Date;
-}
-
 export interface DashboardData {
   /** First day of the summarised month (UTC midnight). */
   month: Date;
   summary: DashboardSummary;
   breakdown: CategoryBreakdown[];
   trend: MonthlyPoint[];
-  recentExpenses: RecentExpense[];
+  recentTransactions: RecentTransaction[];
   topCategory: CategoryBreakdown | null;
 }
 
@@ -94,6 +86,7 @@ export async function getDashboardData(
     monthIncomes,
     monthExpenses,
     recentExpenses,
+    recentIncomes,
     trendExpenses,
     trendIncomes,
   ] = await Promise.all([
@@ -129,16 +122,30 @@ export async function getDashboardData(
         expenseDate: true,
       },
     }),
+    // Only the latest few of each; they are merged into one list below.
     prisma.expense.findMany({
       where: { userId },
       orderBy: [{ expenseDate: "desc" }, { createdAt: "desc" }],
-      take: RECENT_LIMIT,
+      take: RECENT_TRANSACTION_LIMIT,
       select: {
         id: true,
         category: true,
         amount: true,
         description: true,
         expenseDate: true,
+        createdAt: true,
+      },
+    }),
+    prisma.income.findMany({
+      where: { userId },
+      orderBy: [{ incomeDate: "desc" }, { createdAt: "desc" }],
+      take: RECENT_TRANSACTION_LIMIT,
+      select: {
+        id: true,
+        amount: true,
+        description: true,
+        incomeDate: true,
+        createdAt: true,
       },
     }),
     prisma.expense.findMany({
@@ -265,20 +272,15 @@ export async function getDashboardData(
     breakdown,
     trend,
     topCategory,
-    recentExpenses: recentExpenses.map((expense) => {
-      const option = CATEGORY_BY_VALUE[expense.category];
-
-      return {
-        id: expense.id,
-        category: expense.category,
-        label: option.label,
-        emoji: option.emoji,
-        tint: option.tint,
-        color: option.color,
+    recentTransactions: mergeRecentTransactions(
+      recentExpenses.map((expense) => ({
+        ...expense,
         amount: toNumber(expense.amount),
-        description: expense.description,
-        date: expense.expenseDate,
-      };
-    }),
+      })),
+      recentIncomes.map((income) => ({
+        ...income,
+        amount: toNumber(income.amount),
+      })),
+    ),
   };
 }

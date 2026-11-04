@@ -7,13 +7,14 @@ import {
   Heading,
   Link as ChakraLink,
   Progress,
-  Stack,
   Text,
 } from "@chakra-ui/react";
 import Link from "next/link";
 
 import type { BudgetMonth } from "@/lib/budgets";
+import type { RecentTransaction } from "@/lib/recent-transactions";
 
+import { RecentTransactionsCard } from "./recent-transactions-card";
 import { SpendingCategoriesCard } from "./spending-categories-card";
 
 const monthlySpending = [
@@ -25,33 +26,21 @@ const monthlySpending = [
   { month: "Jun", height: 64 },
 ];
 
-const transactions = [
-  {
-    name: "Uber",
-    category: "Transport",
-    amount: "-R120",
-    color: "danger.solid",
-  },
-  {
-    name: "Checkers",
-    category: "Groceries",
-    amount: "-R450",
-    color: "danger.solid",
-  },
-  {
-    name: "Salary",
-    category: "Income",
-    amount: "+R5000",
-    color: "success.solid",
-  },
-];
-
 interface DashboardSectionsProps {
   budgetMonth: BudgetMonth;
+  recentTransactions: RecentTransaction[];
+  currency: string;
 }
 
-/** Chart, budget and transaction sections; only the categories card is live. */
-export function DashboardSections({ budgetMonth }: DashboardSectionsProps) {
+/**
+ * Chart, budget and transaction sections. The categories and recent
+ * transactions cards are live; the trend chart and budget progress are not.
+ */
+export function DashboardSections({
+  budgetMonth,
+  recentTransactions,
+  currency,
+}: DashboardSectionsProps) {
   return (
     <>
       {/* Monthly Spending */}
@@ -164,53 +153,10 @@ export function DashboardSections({ budgetMonth }: DashboardSectionsProps) {
         </Box>
       </Grid>
 
-      {/* Recent Transactions */}
-      <Box
-        mt="8"
-        bg="bg.panel"
-        p="6"
-        borderRadius="2xl"
-        shadow="md"
-        border="1px solid"
-        borderColor="border"
-      >
-        <Flex justify="space-between" align="center" mb="6">
-          <Heading size="lg" color="fg">
-            Recent Transactions
-          </Heading>
-
-          <Text fontSize="sm" color="brand.fg" fontWeight="semibold">
-            Latest activity
-          </Text>
-        </Flex>
-
-        <Stack gap="0">
-          {transactions.map((transaction, index) => (
-            <Flex
-              key={transaction.name}
-              align="center"
-              justify="space-between"
-              py="4"
-              borderBottom={
-                index !== transactions.length - 1 ? "1px solid" : "none"
-              }
-              borderColor="border"
-            >
-              <Box>
-                <Text fontWeight="semibold">{transaction.name}</Text>
-
-                <Text css={{ fontSize: "sm", color: "fg.muted" }}>
-                  {transaction.category}
-                </Text>
-              </Box>
-
-              <Text fontWeight="bold" color={transaction.color}>
-                {transaction.amount}
-              </Text>
-            </Flex>
-          ))}
-        </Stack>
-      </Box>
+      <RecentTransactionsCard
+        transactions={recentTransactions}
+        currency={currency}
+      />
     </>
   );
 }

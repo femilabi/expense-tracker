@@ -23,7 +23,10 @@ export default async function Dashboard() {
   await connection();
 
   const user = await getCurrentUser();
-  const [{ month, summary, topCategory }, budgetMonth] = await Promise.all([
+  const [
+    { month, summary, topCategory, recentTransactions },
+    budgetMonth,
+  ] = await Promise.all([
     getDashboardData(user.id),
     getBudgetMonth(user.id, getCurrentMonth()),
   ]);
@@ -52,7 +55,11 @@ export default async function Dashboard() {
         <SummaryCards summary={summary} topCategory={topCategory} />
       </Stack>
 
-      <DashboardSections budgetMonth={budgetMonth} />
+      <DashboardSections
+        budgetMonth={budgetMonth}
+        recentTransactions={recentTransactions}
+        currency={summary.currency}
+      />
     </Box>
   );
 }

@@ -18,6 +18,12 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 });
 
+const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
 export function formatCurrency(amount: number, currency: string): string {
   try {
     return new Intl.NumberFormat("en-US", {
@@ -42,4 +48,9 @@ export function formatShortMonth(date: Date): string {
 
 export function formatDate(date: Date): string {
   return dateFormatter.format(date);
+}
+
+/** "Nov 3". Calendar dates are stored as UTC midnight, so format in UTC. */
+export function formatShortDate(date: Date): string {
+  return shortDateFormatter.format(date);
 }
