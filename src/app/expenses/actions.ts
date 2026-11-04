@@ -38,6 +38,7 @@ function revalidateExpensePages() {
   revalidatePath("/expenses");
   revalidatePath("/expenses/[id]", "page");
   revalidatePath("/dashboard");
+  revalidatePath("/budget");
 }
 
 export async function createExpense(

@@ -11,7 +11,6 @@ import {
   Text,
 } from "@chakra-ui/react";
 
-import type { Currency } from "@/app/expenses/expense-form/constants/currencies";
 import type { ExpenseInput } from "@/app/expenses/expense-form/expense-schema";
 import { COLORS } from "@/components/shared/colors";
 import { DeleteExpenseDialog } from "@/components/expense/delete-expense-dialog";
@@ -48,13 +47,11 @@ interface ExpensesHistoryProps {
   /** YYYY-MM-DD reference date supplied by the server render. */
   referenceDate: string;
   initialExpenses: ExpenseRecord[];
-  defaultCurrency: Currency;
 }
 
 export function ExpensesHistory({
   referenceDate,
   initialExpenses,
-  defaultCurrency,
 }: ExpensesHistoryProps) {
   const [expenses, setExpenses] =
     React.useState<ExpenseRecord[]>(initialExpenses);
@@ -303,7 +300,6 @@ export function ExpensesHistory({
         open={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onSubmit={handleAddExpense}
-        defaultCurrency={defaultCurrency}
       />
 
       <ExpenseDialog
@@ -311,7 +307,6 @@ export function ExpensesHistory({
         expense={editingExpense}
         onClose={() => setIsEditDialogOpen(false)}
         onSubmit={handleUpdateExpense}
-        defaultCurrency={defaultCurrency}
       />
 
       <DeleteExpenseDialog

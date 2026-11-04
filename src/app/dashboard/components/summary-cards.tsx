@@ -1,7 +1,7 @@
 import {
   SummaryMetrics,
   type SummaryMetric,
-} from "@/components/expense/summary-overview";
+} from "@/components/shared/summary-metrics";
 import { COLORS } from "@/components/shared/colors";
 import type { CategoryBreakdown, DashboardSummary } from "@/lib/dashboard";
 import { formatCurrency } from "@/lib/format";
