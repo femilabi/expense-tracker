@@ -13,6 +13,7 @@ import {
   RECENT_TRANSACTION_LIMIT,
   type RecentTransaction,
 } from "@/lib/recent-transactions";
+import type { DailySpend } from "@/lib/spending-pace";
 
 const TREND_MONTHS = 6;
 
@@ -52,6 +53,8 @@ export interface DashboardData {
   breakdown: CategoryBreakdown[];
   trend: MonthlyPoint[];
   recentTransactions: RecentTransaction[];
+  /** Daily spending by category for this month and last, for the pace chart. */
+  dailySpending: { thisMonth: DailySpend[]; lastMonth: DailySpend[] };
   topCategory: CategoryBreakdown | null;
 }
 
@@ -79,6 +82,7 @@ export async function getDashboardData(
 
   const currentMonthStart = monthStart(year, month);
   const nextMonthStart = monthStart(year, month + 1);
+  const lastMonthStart = monthStart(year, month - 1);
   const trendStart = monthStart(year, month - (TREND_MONTHS - 1));
 
   const [
@@ -89,6 +93,7 @@ export async function getDashboardData(
     recentIncomes,
     trendExpenses,
     trendIncomes,
+    lastMonthSpending,
   ] = await Promise.all([
     prisma.profile.findUnique({
       where: { userId },
@@ -155,6 +160,15 @@ export async function getDashboardData(
     prisma.income.findMany({
       where: { userId, incomeDate: { gte: trendStart, lt: nextMonthStart } },
       select: { amount: true, incomeDate: true },
+    }),
+    // One row per date and category: enough for last month's pace line.
+    prisma.expense.groupBy({
+      by: ["expenseDate", "category"],
+      where: {
+        userId,
+        expenseDate: { gte: lastMonthStart, lt: currentMonthStart },
+      },
+      _sum: { amount: true },
     }),
   ]);
 
@@ -282,5 +296,17 @@ export async function getDashboardData(
         amount: toNumber(income.amount),
       })),
     ),
+    dailySpending: {
+      thisMonth: monthExpenses.map((expense) => ({
+        date: expense.expenseDate,
+        category: expense.category,
+        amount: toNumber(expense.amount),
+      })),
+      lastMonth: lastMonthSpending.map((group) => ({
+        date: group.expenseDate,
+        category: group.category,
+        amount: toNumber(group._sum.amount),
+      })),
+    },
   };
 }

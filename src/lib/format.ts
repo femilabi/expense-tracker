@@ -38,6 +38,29 @@ export function formatCurrency(amount: number, currency: string): string {
   }
 }
 
+/** Short axis labels such as "$1.2K". */
+export function formatCompactCurrency(
+  amount: number,
+  currency: string,
+): string {
+  const options: Intl.NumberFormatOptions = {
+    style: "currency",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  };
+
+  try {
+    return new Intl.NumberFormat("en-US", { ...options, currency }).format(
+      amount,
+    );
+  } catch {
+    return new Intl.NumberFormat("en-US", {
+      ...options,
+      currency: DEFAULT_CURRENCY,
+    }).format(amount);
+  }
+}
+
 export function formatMonth(date: Date): string {
   return monthFormatter.format(date);
 }
