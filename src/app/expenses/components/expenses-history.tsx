@@ -47,11 +47,13 @@ interface ExpensesHistoryProps {
   /** YYYY-MM-DD reference date supplied by the server render. */
   referenceDate: string;
   initialExpenses: ExpenseRecord[];
+  currency: ExpenseRecord["currency"];
 }
 
 export function ExpensesHistory({
   referenceDate,
   initialExpenses,
+  currency,
 }: ExpensesHistoryProps) {
   const [expenses, setExpenses] =
     React.useState<ExpenseRecord[]>(initialExpenses);
@@ -259,7 +261,7 @@ export function ExpensesHistory({
           </Flex>
 
           <Stack gap={4}>
-            <SummaryOverview summary={summary} />
+            <SummaryOverview summary={summary} currency={currency} />
 
             <ExpensesToolbar
               filters={filters}

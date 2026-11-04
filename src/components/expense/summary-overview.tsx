@@ -1,4 +1,5 @@
 import type { CurrencyTotal, ExpenseSummary } from "@/app/expenses/types";
+import type { Currency } from "@/app/expenses/expense-form/constants/currencies";
 import {
   formatCurrency,
   formatPercentChange,
@@ -13,6 +14,7 @@ import {
 
 interface SummaryOverviewProps {
   summary: ExpenseSummary;
+  currency: Currency;
 }
 
 function formatOtherTotals(totals: CurrencyTotal[]): string {
@@ -21,7 +23,7 @@ function formatOtherTotals(totals: CurrencyTotal[]): string {
     .join(" · ");
 }
 
-export function SummaryOverview({ summary }: SummaryOverviewProps) {
+export function SummaryOverview({ summary, currency }: SummaryOverviewProps) {
   const primaryMonth = summary.monthTotals[0];
   const primaryYear = summary.yearTotals[0];
   const comparisonCurrency =
@@ -83,7 +85,7 @@ export function SummaryOverview({ summary }: SummaryOverviewProps) {
       label: "This month",
       value: formatCurrency(
         primaryMonth?.total ?? 0,
-        primaryMonth?.currency ?? "USD",
+        primaryMonth?.currency ?? currency,
       ),
       caption: monthCaption,
       emphasis: true,
@@ -111,7 +113,7 @@ export function SummaryOverview({ summary }: SummaryOverviewProps) {
       label: "Year to date",
       value: formatCurrency(
         primaryYear?.total ?? 0,
-        primaryYear?.currency ?? "USD",
+        primaryYear?.currency ?? currency,
       ),
       caption: yearCaption,
     },
