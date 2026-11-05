@@ -15,12 +15,14 @@ interface BudgetCategoryProgressProps {
   currency: string;
   /** Show spent, budget and remaining amounts under the bar. */
   showAmounts?: boolean;
+  barVariant?: "solid" | "glow";
 }
 
 export function BudgetCategoryProgress({
   item,
   currency,
   showAmounts = false,
+  barVariant = "solid",
 }: BudgetCategoryProgressProps) {
   const { label, progress } = item;
   const { budget, spent, remaining, percentUsed, isOverBudget } = progress;
@@ -63,7 +65,11 @@ export function BudgetCategoryProgress({
         </Text>
       </Flex>
 
-      <BudgetProgressBar label={label} progress={progress} />
+      <BudgetProgressBar
+        label={label}
+        progress={progress}
+        variant={barVariant}
+      />
 
       {showAmounts ? (
         <Flex

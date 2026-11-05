@@ -18,6 +18,12 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 });
 
+const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
 export function formatCurrency(amount: number, currency: string): string {
   try {
     return new Intl.NumberFormat("en-US", {
@@ -27,6 +33,48 @@ export function formatCurrency(amount: number, currency: string): string {
   } catch {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
+      currency: DEFAULT_CURRENCY,
+    }).format(amount);
+  }
+}
+
+/** Whole amounts for chart labels, such as "$1,200". */
+export function formatWholeCurrency(amount: number, currency: string): string {
+  const options: Intl.NumberFormatOptions = {
+    style: "currency",
+    maximumFractionDigits: 0,
+  };
+
+  try {
+    return new Intl.NumberFormat("en-US", { ...options, currency }).format(
+      amount,
+    );
+  } catch {
+    return new Intl.NumberFormat("en-US", {
+      ...options,
+      currency: DEFAULT_CURRENCY,
+    }).format(amount);
+  }
+}
+
+/** Short axis labels such as "$1.2K". */
+export function formatCompactCurrency(
+  amount: number,
+  currency: string,
+): string {
+  const options: Intl.NumberFormatOptions = {
+    style: "currency",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  };
+
+  try {
+    return new Intl.NumberFormat("en-US", { ...options, currency }).format(
+      amount,
+    );
+  } catch {
+    return new Intl.NumberFormat("en-US", {
+      ...options,
       currency: DEFAULT_CURRENCY,
     }).format(amount);
   }
@@ -42,4 +90,9 @@ export function formatShortMonth(date: Date): string {
 
 export function formatDate(date: Date): string {
   return dateFormatter.format(date);
+}
+
+/** "Nov 3". Calendar dates are stored as UTC midnight, so format in UTC. */
+export function formatShortDate(date: Date): string {
+  return shortDateFormatter.format(date);
 }

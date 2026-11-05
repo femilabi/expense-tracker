@@ -171,6 +171,51 @@ describe("summarizeBudgets", () => {
     expect(summary.total.isOverBudget).toBe(true);
   });
 
+  it("sums several budgets that are all under their limit", () => {
+    const summary = summarizeBudgets([
+      item(500, 200),
+      item(400, 150),
+      item(300, 120),
+    ]);
+
+    expect(summary.total).toMatchObject({
+      budget: 1200,
+      spent: 470,
+      remaining: 730,
+      isOverBudget: false,
+    });
+    expect(summary.total.percentUsed).toBeCloseTo(39.17, 2);
+    expect(formatPercentUsed(summary.total.percentUsed ?? 0)).toBe("39%");
+    expect(summary.overBudgetCount).toBe(0);
+    expect(summary.unbudgetedSpent).toBe(0);
+  });
+
+  it("is not over budget when total spending equals the total budget", () => {
+    const summary = summarizeBudgets([item(100, 100), item(50, 50)]);
+
+    expect(summary.total).toMatchObject({
+      budget: 150,
+      spent: 150,
+      remaining: 0,
+      percentUsed: 100,
+      fill: 100,
+      isOverBudget: false,
+    });
+  });
+
+  it("reports the full budget remaining when nothing has been spent", () => {
+    const summary = summarizeBudgets([item(200, 0), item(100, 0)]);
+
+    expect(summary.total).toMatchObject({
+      budget: 300,
+      spent: 0,
+      remaining: 300,
+      percentUsed: 0,
+      fill: 0,
+      isOverBudget: false,
+    });
+  });
+
   it("rounds totals to cents", () => {
     const summary = summarizeBudgets([item(0.1, 0.1), item(0.2, 0.2)]);
 
