@@ -5,7 +5,7 @@ export type EmailTemplate = {
   text: string;
 };
 
-/** User input (names, email addresses) is escaped before it goes in HTML. */
+/** Escapes text before it goes in HTML. The renderer applies it to all content. */
 export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
