@@ -28,7 +28,7 @@ import {
   type SpendingStatus,
 } from "@/lib/spending-pace";
 
-import { COLORS } from "@/components/shared/colors";
+import { CSS_COLORS, cssTint } from "@/components/shared/colors";
 
 import { EmptyState } from "./empty-state";
 
@@ -46,33 +46,34 @@ interface SpendingPaceCardProps {
   currency: string;
 }
 
-/** Line colour, pill tint and pill text for each status. */
+/**
+ * Every colour on this card comes from the variables in globals.css. Pill and
+ * chip text stays in --foreground: the lighter status colours are too faint
+ * for small text, so they colour the tint, dot and lines instead.
+ */
 const STATUS_STYLES: Record<
   SpendingStatus,
-  { line: string; pillBg: string; pillText: string; label: string }
+  { line: string; pillBg: string; label: string }
 > = {
   under: {
-    line: COLORS.success,
-    pillBg: COLORS.successSurface,
-    pillText: "success.hover",
+    line: CSS_COLORS.success,
+    pillBg: cssTint(CSS_COLORS.success),
     label: "Under budget",
   },
   over: {
-    line: COLORS.danger,
-    pillBg: COLORS.dangerSurface,
-    pillText: "danger.hover",
+    line: CSS_COLORS.danger,
+    pillBg: cssTint(CSS_COLORS.danger),
     label: "Over budget",
   },
   none: {
-    line: COLORS.primary,
-    pillBg: COLORS.raisedHover,
-    pillText: COLORS.muted,
+    line: CSS_COLORS.secondary,
+    pillBg: cssTint(CSS_COLORS.muted),
     label: "No budget set",
   },
 };
 
-const LAST_MONTH_COLOR = COLORS.muted;
-const BUDGET_COLOR = COLORS.muted;
+const LAST_MONTH_COLOR = CSS_COLORS.muted;
+const BUDGET_COLOR = CSS_COLORS.muted;
 
 const subscribeToMotionPreference = (onChange: () => void) => {
   const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -128,31 +129,40 @@ export function SpendingPaceCard({
       as="section"
       aria-labelledby={`${id}-title`}
       mt="8"
-      bg="bg.panel"
+      bg={CSS_COLORS.card}
       p="6"
       borderRadius="2xl"
       shadow="md"
       border="1px solid"
-      borderColor="border"
+      borderColor={CSS_COLORS.border}
     >
       <Flex justify="space-between" align="center" gap="3" wrap="wrap">
-        <Heading id={`${id}-title`} size="lg" color="fg">
+        <Heading id={`${id}-title`} size="lg" color={CSS_COLORS.foreground}>
           Your spending this month
         </Heading>
         {!pace.isEmpty ? (
-          <Text
+          <Flex
             as="span"
+            align="center"
+            gap="2"
             px="3"
             py="1"
             borderRadius="full"
             bg={styles.pillBg}
-            color={styles.pillText}
+            color={CSS_COLORS.foreground}
             fontSize="sm"
             fontWeight="semibold"
             whiteSpace="nowrap"
           >
+            <Box
+              as="span"
+              boxSize="2"
+              borderRadius="full"
+              bg={styles.line}
+              aria-hidden="true"
+            />
             {styles.label}
-          </Text>
+          </Flex>
         ) : null}
       </Flex>
 
@@ -167,12 +177,16 @@ export function SpendingPaceCard({
               fontSize={{ base: "3xl", md: "4xl" }}
               fontWeight="bold"
               lineHeight="1.1"
-              color="fg"
+              color={CSS_COLORS.foreground}
               fontVariantNumeric="tabular-nums"
             >
               {format(pace.spentSoFar)}
             </Text>
-            <Text mt="1" color="fg.muted" fontVariantNumeric="tabular-nums">
+            <Text
+              mt="1"
+              color={CSS_COLORS.muted}
+              fontVariantNumeric="tabular-nums"
+            >
               {pace.budget === null
                 ? "spent so far"
                 : `of ${format(pace.budget)} budget`}
@@ -182,32 +196,28 @@ export function SpendingPaceCard({
           <HStack mt="4" gap="2" wrap="wrap">
             {remaining !== null ? (
               remaining < 0 ? (
-                <StatChip bg={COLORS.dangerSurface} color="danger.hover">
+                <StatChip bg={cssTint(CSS_COLORS.danger)}>
                   {format(-remaining)} over
                 </StatChip>
               ) : (
-                <StatChip bg={COLORS.raised} color="fg">
+                <StatChip bg={CSS_COLORS.background}>
                   {format(remaining)} left
                 </StatChip>
               )
             ) : null}
             {comparison ? (
               comparison.direction === "same" ? (
-                <StatChip bg={COLORS.raised} color="fg">
+                <StatChip bg={CSS_COLORS.background}>
                   Same as last month
                 </StatChip>
               ) : (
                 <StatChip
-                  bg={
+                  bg={cssTint(
                     comparison.direction === "less"
-                      ? COLORS.successSurface
-                      : COLORS.accentSurface
-                  }
-                  color={
-                    comparison.direction === "less"
-                      ? "success.hover"
-                      : "accent.fg"
-                  }
+                      ? CSS_COLORS.success
+                      : CSS_COLORS.warning,
+                    18,
+                  )}
                 >
                   <span aria-hidden="true">
                     {comparison.direction === "less" ? "↓" : "↑"}{" "}
@@ -225,7 +235,7 @@ export function SpendingPaceCard({
           <Text
             id={summaryId}
             mt="4"
-            color="fg"
+            color={CSS_COLORS.foreground}
             fontVariantNumeric="tabular-nums"
           >
             {summary}
@@ -253,7 +263,7 @@ export function SpendingPaceCard({
                   />
                 </defs>
                 <CartesianGrid
-                  stroke={chart.color(COLORS.border)}
+                  stroke={CSS_COLORS.border}
                   strokeOpacity={0.7}
                   vertical={false}
                 />
@@ -265,6 +275,7 @@ export function SpendingPaceCard({
                   tickFormatter={(day: number) =>
                     day === 1 ? `${labels.thisMonth} 1` : String(day)
                   }
+                  tick={{ fill: CSS_COLORS.muted }}
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
@@ -272,6 +283,7 @@ export function SpendingPaceCard({
                 <YAxis
                   width={48}
                   tickCount={4}
+                  tick={{ fill: CSS_COLORS.muted }}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(value: number) =>
@@ -280,7 +292,7 @@ export function SpendingPaceCard({
                 />
                 <Tooltip
                   cursor={{
-                    stroke: chart.color(COLORS.borderStrong),
+                    stroke: CSS_COLORS.muted,
                     strokeWidth: 1,
                   }}
                   animationDuration={animate ? 150 : 0}
@@ -296,7 +308,7 @@ export function SpendingPaceCard({
                 {pace.budget !== null ? (
                   <ReferenceLine
                     y={pace.budget}
-                    stroke={chart.color(BUDGET_COLOR)}
+                    stroke={BUDGET_COLOR}
                     strokeDasharray="4 4"
                     strokeWidth={1}
                     ifOverflow="extendDomain"
@@ -304,8 +316,8 @@ export function SpendingPaceCard({
                       <BudgetLabel
                         viewBox={props.viewBox}
                         text={`Budget ${formatWholeCurrency(pace.budget ?? 0, currency)}`}
-                        fill={chart.color(COLORS.raisedHover)}
-                        textColor={chart.color(COLORS.text)}
+                        fill={CSS_COLORS.border}
+                        textColor={CSS_COLORS.foreground}
                       />
                     )}
                   />
@@ -313,13 +325,13 @@ export function SpendingPaceCard({
                 <Line
                   type="monotone"
                   dataKey={chart.key("lastMonth")}
-                  stroke={chart.color(LAST_MONTH_COLOR)}
+                  stroke={LAST_MONTH_COLOR}
                   strokeWidth={1.5}
                   dot={false}
                   activeDot={{
                     r: 4,
-                    fill: chart.color(LAST_MONTH_COLOR),
-                    stroke: chart.color(COLORS.card),
+                    fill: LAST_MONTH_COLOR,
+                    stroke: CSS_COLORS.card,
                     strokeWidth: 2,
                   }}
                   isAnimationActive={animate}
@@ -328,14 +340,14 @@ export function SpendingPaceCard({
                 <Area
                   type="monotone"
                   dataKey={chart.key("thisMonth")}
-                  stroke={chart.color(styles.line)}
+                  stroke={styles.line}
                   strokeWidth={3}
                   fill={`url(#${gradientId})`}
                   dot={false}
                   activeDot={{
                     r: 5,
-                    fill: chart.color(styles.line),
-                    stroke: chart.color(COLORS.card),
+                    fill: styles.line,
+                    stroke: CSS_COLORS.card,
                     strokeWidth: 2,
                   }}
                   isAnimationActive={animate}
@@ -350,9 +362,9 @@ export function SpendingPaceCard({
                       <TodayMarker
                         cx={props.cx}
                         cy={props.cy}
-                        color={chart.color(styles.line)}
-                        ring={chart.color(COLORS.card)}
-                        textColor={chart.color(COLORS.text)}
+                        color={styles.line}
+                        ring={CSS_COLORS.card}
+                        textColor={CSS_COLORS.foreground}
                         label={formatWholeCurrency(
                           today.thisMonth ?? 0,
                           currency,
@@ -375,15 +387,7 @@ export function SpendingPaceCard({
   );
 }
 
-function StatChip({
-  bg,
-  color,
-  children,
-}: {
-  bg: string;
-  color: string;
-  children: React.ReactNode;
-}) {
+function StatChip({ bg, children }: { bg: string; children: React.ReactNode }) {
   return (
     <Text
       as="span"
@@ -391,7 +395,7 @@ function StatChip({
       py="1.5"
       borderRadius="lg"
       bg={bg}
-      color={color}
+      color={CSS_COLORS.foreground}
       fontSize="sm"
       fontWeight="medium"
       fontVariantNumeric="tabular-nums"
@@ -405,7 +409,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <Flex align="center" gap="2">
       <Box boxSize="2.5" borderRadius="full" bg={color} />
-      <Text fontSize="xs" color="fg.muted">
+      <Text fontSize="xs" color={CSS_COLORS.muted}>
         {label}
       </Text>
     </Flex>
@@ -432,16 +436,16 @@ function PaceTooltip({ active, payload, labels, currency }: PaceTooltipProps) {
       maxW="15rem"
       px="3"
       py="2"
-      bg="bg.panel"
+      bg={CSS_COLORS.card}
       borderWidth="1px"
-      borderColor="border"
+      borderColor={CSS_COLORS.border}
       borderRadius="lg"
       shadow="md"
       fontSize="xs"
       fontVariantNumeric="tabular-nums"
     >
       {point.thisMonth !== null ? (
-        <Text color="fg">
+        <Text color={CSS_COLORS.foreground}>
           <Text as="span" fontWeight="semibold">
             {labels.thisMonth} {point.day}:
           </Text>{" "}
@@ -449,7 +453,7 @@ function PaceTooltip({ active, payload, labels, currency }: PaceTooltipProps) {
         </Text>
       ) : null}
       {point.lastMonth !== null ? (
-        <Text color="fg.muted">
+        <Text color={CSS_COLORS.muted}>
           Last month by {labels.lastMonth} {point.day}:{" "}
           {formatCurrency(point.lastMonth, currency)}.
         </Text>
