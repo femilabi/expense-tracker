@@ -29,7 +29,7 @@ export async function issueSignupCode({
 }: PendingSignupInput): Promise<string | null> {
   const code = generateSignupCode();
 
-  const sent = await sendSignupCodeEmail(email, code);
+  const sent = await sendSignupCodeEmail(email, code, name);
   if (!sent) {
     return null;
   }

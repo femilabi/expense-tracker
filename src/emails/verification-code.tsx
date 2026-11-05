@@ -25,8 +25,8 @@ export function VerificationCodeEmail({
     <EmailLayout>
       <Heading>Verify your email</Heading>
       <Paragraph>
-        Hi {firstNameOf(name)}, enter this code to verify your Expense Tracker
-        account:
+        Hi {firstNameOf(name)}, enter this code to finish creating your Expense
+        Tracker account:
       </Paragraph>
       <CodeBox code={code} />
       <Muted>
@@ -38,7 +38,7 @@ export function VerificationCodeEmail({
         for it.
       </Muted>
       <Muted>
-        If you did not create an account you can safely ignore this email.
+        If you didn&apos;t try to sign up, you can safely ignore this email.
       </Muted>
     </EmailLayout>
   );
@@ -56,13 +56,13 @@ export function verificationCodeEmail(
     text: [
       "Verify your Expense Tracker email",
       "",
-      `Hi ${firstName}, enter this code to verify your account:`,
+      `Hi ${firstName}, enter this code to finish creating your account:`,
       "",
       input.code,
       "",
       `This code expires in ${input.expiresInMinutes} minutes and can only be used once.`,
       "Never share this code with anyone. Expense Tracker will never ask you for it.",
-      "If you did not create an account you can safely ignore this email.",
+      "If you didn't try to sign up, you can safely ignore this email.",
     ].join("\n"),
   };
 }

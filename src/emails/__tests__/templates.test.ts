@@ -27,15 +27,15 @@ describe("email templates", () => {
 
   it("escapes user input in the HTML", () => {
     const email = emailChangeVerificationEmail({
-      name: "<script>alert(1)</script>",
-      newEmail: 'x"@evil.test',
+      newEmail: '<script>alert(1)</script>x"@evil.test',
       confirmUrl: 'https://app.test/confirm?token=a&b="c"',
       expiresInMinutes: 60,
     });
 
     expect(email.html).not.toContain("<script>");
-    expect(email.html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
-    expect(email.html).toContain("x&quot;@evil.test");
+    expect(email.html).toContain(
+      "&lt;script&gt;alert(1)&lt;/script&gt;x&quot;@evil.test",
+    );
     expect(email.html).toContain(
       'href="https://app.test/confirm?token=a&amp;b=&quot;c&quot;"',
     );

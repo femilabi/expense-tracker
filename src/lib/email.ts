@@ -1,26 +1,32 @@
 import { Resend } from "resend";
 
 import {
+  emailChangeVerificationEmail,
+  passwordResetEmail,
+  verificationCodeEmail,
+  welcomeEmail,
+} from "@/emails";
+import {
+  EMAIL_CHANGE_TOKEN_TTL_MS,
   EMAIL_CHANGE_UNDO_TTL_MS,
   formatExpiry,
 } from "@/lib/email-change-token";
 import { SIGNUP_CODE_TTL_MS } from "@/lib/signup-code";
 import { describeUserAgent } from "@/lib/user-agent";
 
-const RESET_SUBJECT = "Reset your Expense Tracker password";
+// The emails below without a template from `@/emails` yet still build their
+// own HTML. They move to templates as those are added.
 const CONFIRMATION_SUBJECT = "Your Expense Tracker password was changed";
 const ACCOUNT_DELETED_SUBJECT = "Your Expense Tracker account was deleted";
-const EMAIL_CHANGE_VERIFY_SUBJECT = "Confirm your new Expense Tracker email";
 const EMAIL_CHANGED_SUBJECT = "Your Expense Tracker email was changed";
 const EMAIL_RESTORED_SUBJECT = "Your Expense Tracker email was restored";
 const EMAIL_REMOVED_SUBJECT =
   "This email was removed from an Expense Tracker account";
 const EMAIL_CHANGE_COMPLETED_SUBJECT = "Your Expense Tracker email is updated";
-const SIGNUP_CODE_SUBJECT = "Your Expense Tracker verification code";
-const WELCOME_SUBJECT = "Welcome to Expense Tracker";
 const SIGN_IN_SUBJECT = "New sign-in to your Expense Tracker account";
 const EXPIRY_MINUTES = 15;
 const SIGNUP_CODE_MINUTES = SIGNUP_CODE_TTL_MS / 60_000;
+const EMAIL_CHANGE_MINUTES = EMAIL_CHANGE_TOKEN_TTL_MS / 60_000;
 const UNDO_DAYS = EMAIL_CHANGE_UNDO_TTL_MS / (24 * 60 * 60 * 1000);
 
 function getAppUrl(): string {
@@ -123,44 +129,17 @@ async function sendEmail({
 export async function sendPasswordResetEmail(
   to: string,
   token: string,
+  name: string,
 ): Promise<void> {
   const link = buildPasswordResetLink(token);
 
   await sendEmail({
     to,
-    subject: RESET_SUBJECT,
-    html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #14213d;">
-        <h1 style="font-size: 20px;">Reset your password</h1>
-        <p>We received a request to reset the password for your Expense Tracker account.</p>
-        <p>
-          <a href="${link}" style="background:#0e8388;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;display:inline-block;">
-            Choose a new password
-          </a>
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          This link expires in ${EXPIRY_MINUTES} minutes and can only be used once.
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          If the button doesn't work, copy this link into your browser:<br />
-          ${link}
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          If you didn't ask to reset your password, you can safely ignore this email.
-          Your password won't change.
-        </p>
-      </div>
-    `,
-    text: [
-      "Reset your Expense Tracker password",
-      "",
-      "We received a request to reset the password for your Expense Tracker account.",
-      "",
-      `Open this link to choose a new password: ${link}`,
-      "",
-      `This link expires in ${EXPIRY_MINUTES} minutes and can only be used once.`,
-      "If you didn't ask to reset your password, you can safely ignore this email. Your password won't change.",
-    ].join("\n"),
+    ...passwordResetEmail({
+      name,
+      resetUrl: link,
+      expiresInMinutes: EXPIRY_MINUTES,
+    }),
     developmentDetails: `Password reset link for ${to}: ${link}`,
   });
 }
@@ -229,39 +208,11 @@ export async function sendEmailChangeVerificationEmail(
 
   return sendEmail({
     to,
-    subject: EMAIL_CHANGE_VERIFY_SUBJECT,
-    html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #14213d;">
-        <h1 style="font-size: 20px;">Confirm your new email</h1>
-        <p>We received a request to change the email on an Expense Tracker account to
-          this address. If that was you, confirm it to finish the change.</p>
-        <p>
-          <a href="${link}" style="background:#0e8388;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;display:inline-block;">
-            Confirm new email
-          </a>
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          This link expires in 1 hour and can only be used once.
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          If the button doesn't work, copy this link into your browser:<br />
-          ${link}
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          If it wasn't you, you can safely ignore this email. Nothing will change.
-        </p>
-      </div>
-    `,
-    text: [
-      "Confirm your new Expense Tracker email",
-      "",
-      "We received a request to change the email on an Expense Tracker account to this address. If that was you, confirm it to finish the change.",
-      "",
-      `Open this link to confirm: ${link}`,
-      "",
-      "This link expires in 1 hour and can only be used once.",
-      "If it wasn't you, you can safely ignore this email. Nothing will change.",
-    ].join("\n"),
+    ...emailChangeVerificationEmail({
+      newEmail: to,
+      confirmUrl: link,
+      expiresInMinutes: EMAIL_CHANGE_MINUTES,
+    }),
     developmentDetails: `Email change link for ${to}: ${link}`,
   });
 }
@@ -416,33 +367,15 @@ export async function sendEmailChangeCompletedEmail(to: string): Promise<void> {
 export async function sendSignupCodeEmail(
   to: string,
   code: string,
+  name: string,
 ): Promise<boolean> {
   return sendEmail({
     to,
-    subject: SIGNUP_CODE_SUBJECT,
-    html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #14213d;">
-        <h1 style="font-size: 20px;">Verify your email</h1>
-        <p>Enter this code to finish creating your Expense Tracker account:</p>
-        <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 16px 0;">
-          ${code}
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          The code expires in ${SIGNUP_CODE_MINUTES} minutes. Never share it with anyone.
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          If you didn't try to sign up, you can safely ignore this email.
-        </p>
-      </div>
-    `,
-    text: [
-      "Verify your Expense Tracker email",
-      "",
-      `Your verification code is ${code}`,
-      "",
-      `The code expires in ${SIGNUP_CODE_MINUTES} minutes. Never share it with anyone.`,
-      "If you didn't try to sign up, you can safely ignore this email.",
-    ].join("\n"),
+    ...verificationCodeEmail({
+      name,
+      code,
+      expiresInMinutes: SIGNUP_CODE_MINUTES,
+    }),
     developmentDetails: `Signup code for ${to}: ${code}`,
   });
 }
@@ -451,36 +384,9 @@ export async function sendWelcomeEmail(
   to: string,
   name: string,
 ): Promise<void> {
-  const loginLink = `${getAppUrl()}/login`;
-  const forgotLink = buildForgotPasswordLink();
-  const safeName = escapeHtml(name);
-
   await sendEmail({
     to,
-    subject: WELCOME_SUBJECT,
-    html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #14213d;">
-        <h1 style="font-size: 20px;">Welcome, ${safeName}</h1>
-        <p>Your Expense Tracker account is ready. Log in to start tracking your
-          income and expenses.</p>
-        <p>
-          <a href="${loginLink}" style="background:#0e8388;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;display:inline-block;">
-            Log in
-          </a>
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          If this wasn't you, reset the password at ${forgotLink}
-        </p>
-      </div>
-    `,
-    text: [
-      `Welcome to Expense Tracker, ${name}`,
-      "",
-      "Your Expense Tracker account is ready. Log in to start tracking your income and expenses:",
-      loginLink,
-      "",
-      `If this wasn't you, reset the password at ${forgotLink}`,
-    ].join("\n"),
+    ...welcomeEmail({ name, dashboardUrl: `${getAppUrl()}/dashboard` }),
   });
 }
 

@@ -27,7 +27,8 @@ export function WelcomeEmail({ name, dashboardUrl }: WelcomeEmailInput) {
     <EmailLayout>
       <Heading>Welcome, {firstNameOf(name)}!</Heading>
       <Paragraph>
-        Thanks for signing in to Expense Tracker. Here is how to get started:
+        Thanks for signing up for Expense Tracker. Here&apos;s how to get
+        started:
       </Paragraph>
       <ul style={{ paddingLeft: 20, lineHeight: 1.6 }}>
         {steps.map(([title, rest]) => (
@@ -39,14 +40,14 @@ export function WelcomeEmail({ name, dashboardUrl }: WelcomeEmailInput) {
       <Button href={dashboardUrl}>Go to your dashboard</Button>
       <LinkFallback href={dashboardUrl} />
       <Muted>
-        If you did not create this account, reset your password or contact
-        support.
+        If you didn&apos;t create this account, reset its password with
+        &quot;Forgot password?&quot; on the login page.
       </Muted>
     </EmailLayout>
   );
 }
 
-/** Welcomes the user after they sign in for the first time. */
+/** Welcomes the user once their email is verified and the account exists. */
 export function welcomeEmail(input: WelcomeEmailInput): EmailTemplate {
   const firstName = firstNameOf(input.name);
 
@@ -56,12 +57,12 @@ export function welcomeEmail(input: WelcomeEmailInput): EmailTemplate {
     text: [
       `Welcome to Expense Tracker, ${firstName}!`,
       "",
-      "Thanks for signing in. Here is how to get started:",
+      "Thanks for signing up. Here's how to get started:",
       ...steps.map(([title, rest]) => `- ${title} ${rest}`),
       "",
       `Go to your dashboard: ${input.dashboardUrl}`,
       "",
-      "If you did not create this account, reset your password or contact support.",
+      'If you didn\'t create this account, reset its password with "Forgot password?" on the login page.',
     ].join("\n"),
   };
 }

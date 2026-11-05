@@ -81,7 +81,7 @@ export async function requestPasswordReset(
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, email: true },
+    select: { id: true, email: true, name: true },
   });
 
   if (!user) {
@@ -109,7 +109,7 @@ export async function requestPasswordReset(
   // Send after the response so the email provider's latency is not visible to
   // the caller (and does not leak whether the address exists).
   after(async () => {
-    await sendPasswordResetEmail(user.email, token);
+    await sendPasswordResetEmail(user.email, token, user.name);
   });
 
   return { message: NEUTRAL_MESSAGE, tone: "info" };
