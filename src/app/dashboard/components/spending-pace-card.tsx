@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Chart, useChart } from "@chakra-ui/charts";
-import { Box, HStack, Stack, Text } from "@chakra-ui/react";
+import { Box, Flex, HStack, Stack, Text } from "@chakra-ui/react";
 import {
   Area,
   CartesianGrid,
@@ -111,7 +111,11 @@ export function SpendingPaceCard({
   const animate = !reduceMotion;
 
   return (
-    <DashboardCard index={0} aria-labelledby={`${id}-title`}>
+    <DashboardCard
+      index={0}
+      p={{ base: 4, md: 5 }}
+      aria-labelledby={`${id}-title`}
+    >
       <DashboardCardHeader
         title="Your spending this month"
         titleId={`${id}-title`}
@@ -133,7 +137,7 @@ export function SpendingPaceCard({
       />
 
       {pace.isEmpty ? (
-        <Box mt="5">
+        <Box mt="4">
           <EmptyState
             message="No spending this month or last month yet."
             icon={<TrendUpIcon size={22} />}
@@ -141,71 +145,85 @@ export function SpendingPaceCard({
         </Box>
       ) : (
         <>
-          <Box id={figureId} mt="5">
-            <Text
-              fontSize={{ base: "4xl", md: "5xl" }}
-              fontWeight="bold"
-              lineHeight="1"
-              letterSpacing="-0.03em"
-              color={CSS_COLORS.foreground}
-              fontVariantNumeric="tabular-nums"
-            >
-              <AnimatedNumber value={pace.spentSoFar} format={format} />
-            </Text>
-            <Text
-              mt="2"
-              fontSize="sm"
-              color={CSS_COLORS.muted}
-              fontVariantNumeric="tabular-nums"
-            >
-              {pace.budget === null
-                ? "spent so far"
-                : `of ${format(pace.budget)} budget`}
-            </Text>
-          </Box>
+          {/* Key figure and chips share one row from md up to save height. */}
+          <Flex
+            mt="4"
+            direction={{ base: "column", md: "row" }}
+            align={{ base: "flex-start", md: "flex-end" }}
+            justify="space-between"
+            gap={{ base: "3", md: "4" }}
+          >
+            <Box id={figureId} minW={0}>
+              <Text
+                fontSize={{ base: "3xl", md: "4xl" }}
+                fontWeight="bold"
+                lineHeight="1"
+                letterSpacing="-0.03em"
+                color={CSS_COLORS.foreground}
+                fontVariantNumeric="tabular-nums"
+              >
+                <AnimatedNumber value={pace.spentSoFar} format={format} />
+              </Text>
+              <Text
+                mt="1.5"
+                fontSize="sm"
+                color={CSS_COLORS.muted}
+                fontVariantNumeric="tabular-nums"
+              >
+                {pace.budget === null
+                  ? "spent so far"
+                  : `of ${format(pace.budget)} budget`}
+              </Text>
+            </Box>
 
-          <HStack mt="4" gap="2" wrap="wrap">
-            {remaining !== null ? (
-              remaining < 0 ? (
-                <StatChip bg={cssTint(CSS_COLORS.danger)}>
-                  {format(-remaining)} over
-                </StatChip>
-              ) : (
-                <StatChip bg={CSS_COLORS.background}>
-                  {format(remaining)} left
-                </StatChip>
-              )
-            ) : null}
-            {comparison ? (
-              comparison.direction === "same" ? (
-                <StatChip bg={CSS_COLORS.background}>
-                  Same as last month
-                </StatChip>
-              ) : (
-                <StatChip
-                  bg={cssTint(
-                    comparison.direction === "less"
-                      ? CSS_COLORS.success
-                      : CSS_COLORS.warning,
-                    18,
-                  )}
-                >
-                  <span aria-hidden="true">
-                    {comparison.direction === "less" ? "↓" : "↑"}{" "}
-                    {format(comparison.amount)} vs last month
-                  </span>
-                  <Text as="span" srOnly>
-                    {format(comparison.amount)} {comparison.direction} than last
-                    month
-                  </Text>
-                </StatChip>
-              )
-            ) : null}
-          </HStack>
+            <HStack
+              gap="2"
+              wrap="wrap"
+              justify={{ base: "flex-start", md: "flex-end" }}
+            >
+              {remaining !== null ? (
+                remaining < 0 ? (
+                  <StatChip bg={cssTint(CSS_COLORS.danger)}>
+                    {format(-remaining)} over
+                  </StatChip>
+                ) : (
+                  <StatChip bg={CSS_COLORS.background}>
+                    {format(remaining)} left
+                  </StatChip>
+                )
+              ) : null}
+              {comparison ? (
+                comparison.direction === "same" ? (
+                  <StatChip bg={CSS_COLORS.background}>
+                    Same as last month
+                  </StatChip>
+                ) : (
+                  <StatChip
+                    bg={cssTint(
+                      comparison.direction === "less"
+                        ? CSS_COLORS.success
+                        : CSS_COLORS.warning,
+                      18,
+                    )}
+                  >
+                    <span aria-hidden="true">
+                      {comparison.direction === "less" ? "↓" : "↑"}{" "}
+                      {format(comparison.amount)} vs last month
+                    </span>
+                    <Text as="span" srOnly>
+                      {format(comparison.amount)} {comparison.direction} than
+                      last month
+                    </Text>
+                  </StatChip>
+                )
+              ) : null}
+            </HStack>
+          </Flex>
 
           <Text
             id={summaryId}
-            mt="4"
+            mt="3"
+            fontSize="sm"
             lineHeight="1.6"
             color={CSS_COLORS.foreground}
             fontVariantNumeric="tabular-nums"
@@ -213,10 +231,10 @@ export function SpendingPaceCard({
             {summary}
           </Text>
 
-          <Box mt="5" role="img" aria-labelledby={`${figureId} ${summaryId}`}>
+          <Box mt="3" role="img" aria-labelledby={`${figureId} ${summaryId}`}>
             <Chart.Root
               chart={chart}
-              h={{ base: "220px", md: "280px" }}
+              h={{ base: "190px", md: "230px" }}
               aspectRatio="auto"
               css={{
                 "& .recharts-cartesian-axis-tick-value": { fontSize: "11px" },
@@ -230,7 +248,7 @@ export function SpendingPaceCard({
                 data={chart.data}
                 responsive
                 accessibilityLayer={false}
-                margin={{ top: 24, right: 12, bottom: 0, left: 0 }}
+                margin={{ top: 22, right: 8, bottom: 0, left: 0 }}
               >
                 <defs>
                   <Chart.Gradient

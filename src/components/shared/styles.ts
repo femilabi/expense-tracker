@@ -211,8 +211,8 @@ export const glassCardStyles = {
       padding: "1px",
       pointerEvents: "none",
       background: `linear-gradient(140deg, ${cssTint(CSS_COLORS.secondary, 45)}, ${CSS_COLORS.border} 38%, ${cssTint(CSS_COLORS.border, 70)})`,
-      WebkitMask:
-        "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+      // Masks only read opacity, so any opaque palette colour works here.
+      WebkitMask: `linear-gradient(${CSS_COLORS.foreground} 0 0) content-box, linear-gradient(${CSS_COLORS.foreground} 0 0)`,
       WebkitMaskComposite: "xor",
       maskComposite: "exclude",
     },
