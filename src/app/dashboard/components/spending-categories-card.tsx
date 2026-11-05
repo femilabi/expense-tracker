@@ -9,6 +9,7 @@ import type { BudgetMonth } from "@/lib/budgets";
 
 import { BudgetCategoryProgress } from "@/components/budget/budget-category-progress";
 import { COLORS } from "@/components/shared/colors";
+import { PieChartIcon } from "@/components/shared/icons";
 import { focusRing, secondaryButtonStyles } from "@/components/shared/styles";
 
 import { BudgetBreakdownDialog } from "./budget-breakdown-dialog";
@@ -29,9 +30,10 @@ export function SpendingCategoriesCard({
   const topCategories = ranked.slice(0, TOP_CATEGORY_COUNT);
 
   return (
-    <DashboardCard>
+    <DashboardCard index={1}>
       <DashboardCardHeader
         title="Spending Categories"
+        icon={<PieChartIcon />}
         action={
           ranked.length > 0 ? (
             <Button
@@ -58,11 +60,15 @@ export function SpendingCategoriesCard({
                 key={item.category}
                 item={item}
                 currency={budgetMonth.currency}
+                barVariant="glow"
               />
             ))}
           </Stack>
         ) : (
-          <EmptyState message="No budgets set for this month.">
+          <EmptyState
+            message="No budgets set for this month."
+            icon={<PieChartIcon size={22} />}
+          >
             <Text
               asChild
               fontSize="sm"

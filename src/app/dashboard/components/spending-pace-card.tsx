@@ -27,13 +27,13 @@ import {
   type SpendingStatus,
 } from "@/lib/spending-pace";
 
+import { AnimatedNumber } from "@/components/shared/animated-number";
 import { CSS_COLORS, cssTint } from "@/components/shared/colors";
+import { TrendUpIcon } from "@/components/shared/icons";
+import { glassPillStyles } from "@/components/shared/styles";
+import { usePrefersReducedMotion } from "@/components/shared/use-prefers-reduced-motion";
 
-import {
-  DashboardCard,
-  DashboardCardHeader,
-  pillStyles,
-} from "./dashboard-card";
+import { DashboardCard, DashboardCardHeader } from "./dashboard-card";
 import { EmptyState } from "./empty-state";
 
 export interface SpendingPaceLabels {
@@ -78,21 +78,6 @@ const STATUS_STYLES: Record<
 
 const BUDGET_COLOR = CSS_COLORS.muted;
 
-const subscribeToMotionPreference = (onChange: () => void) => {
-  const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
-};
-
-/** True when the user asks for reduced motion; also true during SSR. */
-function usePrefersReducedMotion(): boolean {
-  return React.useSyncExternalStore(
-    subscribeToMotionPreference,
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    () => true,
-  );
-}
-
 export function SpendingPaceCard({
   pace,
   summary,
@@ -126,13 +111,14 @@ export function SpendingPaceCard({
   const animate = !reduceMotion;
 
   return (
-    <DashboardCard aria-labelledby={`${id}-title`}>
+    <DashboardCard index={0} aria-labelledby={`${id}-title`}>
       <DashboardCardHeader
         title="Your spending this month"
         titleId={`${id}-title`}
+        icon={<TrendUpIcon />}
         action={
           !pace.isEmpty ? (
-            <Text as="span" {...pillStyles} bg={styles.pillBg}>
+            <Text as="span" {...glassPillStyles} bg={styles.pillBg}>
               <Box
                 as="span"
                 boxSize="2"
@@ -148,23 +134,26 @@ export function SpendingPaceCard({
 
       {pace.isEmpty ? (
         <Box mt="5">
-          <EmptyState message="No spending this month or last month yet." />
+          <EmptyState
+            message="No spending this month or last month yet."
+            icon={<TrendUpIcon size={22} />}
+          />
         </Box>
       ) : (
         <>
           <Box id={figureId} mt="5">
             <Text
-              fontSize={{ base: "3xl", md: "4xl" }}
+              fontSize={{ base: "4xl", md: "5xl" }}
               fontWeight="bold"
-              lineHeight="1.1"
-              letterSpacing="tight"
+              lineHeight="1"
+              letterSpacing="-0.03em"
               color={CSS_COLORS.foreground}
               fontVariantNumeric="tabular-nums"
             >
-              {format(pace.spentSoFar)}
+              <AnimatedNumber value={pace.spentSoFar} format={format} />
             </Text>
             <Text
-              mt="1"
+              mt="2"
               fontSize="sm"
               color={CSS_COLORS.muted}
               fontVariantNumeric="tabular-nums"
@@ -229,6 +218,13 @@ export function SpendingPaceCard({
               chart={chart}
               h={{ base: "220px", md: "280px" }}
               aspectRatio="auto"
+              css={{
+                "& .recharts-cartesian-axis-tick-value": { fontSize: "11px" },
+                // Soft glow under this month's line.
+                "& .recharts-area-curve": {
+                  filter: `drop-shadow(0 6px 10px ${cssTint(styles.line, 35)})`,
+                },
+              }}
             >
               <ComposedChart
                 data={chart.data}
@@ -240,14 +236,15 @@ export function SpendingPaceCard({
                   <Chart.Gradient
                     id={gradientId}
                     stops={[
-                      { offset: "0%", color: styles.line, opacity: 0.25 },
+                      { offset: "0%", color: styles.line, opacity: 0.32 },
+                      { offset: "55%", color: styles.line, opacity: 0.1 },
                       { offset: "100%", color: styles.line, opacity: 0 },
                     ]}
                   />
                 </defs>
                 <CartesianGrid
                   stroke={CSS_COLORS.border}
-                  strokeOpacity={0.7}
+                  strokeDasharray="3 5"
                   vertical={false}
                 />
                 <XAxis
@@ -275,8 +272,9 @@ export function SpendingPaceCard({
                 />
                 <Tooltip
                   cursor={{
-                    stroke: CSS_COLORS.muted,
+                    stroke: cssTint(styles.line, 55),
                     strokeWidth: 1,
+                    strokeDasharray: "3 3",
                   }}
                   animationDuration={animate ? 150 : 0}
                   content={(props) => (
@@ -299,7 +297,8 @@ export function SpendingPaceCard({
                       <BudgetLabel
                         viewBox={props.viewBox}
                         text={`Budget ${formatWholeCurrency(pace.budget ?? 0, currency)}`}
-                        fill={CSS_COLORS.border}
+                        fill={CSS_COLORS.card}
+                        stroke={CSS_COLORS.border}
                         textColor={CSS_COLORS.foreground}
                       />
                     )}
@@ -333,6 +332,7 @@ export function SpendingPaceCard({
                         color={styles.line}
                         ring={CSS_COLORS.card}
                         textColor={CSS_COLORS.foreground}
+                        pulse={animate}
                         label={formatWholeCurrency(
                           today.thisMonth ?? 0,
                           currency,
@@ -352,7 +352,7 @@ export function SpendingPaceCard({
 
 function StatChip({ bg, children }: { bg: string; children: React.ReactNode }) {
   return (
-    <Text as="span" {...pillStyles} fontWeight="medium" bg={bg}>
+    <Text as="span" {...glassPillStyles} fontWeight="medium" bg={bg}>
       {children}
     </Text>
   );
@@ -376,13 +376,14 @@ function PaceTooltip({ active, payload, labels, currency }: PaceTooltipProps) {
     <Stack
       gap="1"
       maxW="15rem"
-      px="3"
-      py="2"
-      bg={CSS_COLORS.card}
+      px="3.5"
+      py="2.5"
+      bg={`color-mix(in srgb, ${CSS_COLORS.card} 92%, transparent)`}
+      backdropFilter="blur(12px)"
       borderWidth="1px"
       borderColor={CSS_COLORS.border}
-      borderRadius="lg"
-      shadow="md"
+      borderRadius="xl"
+      boxShadow="glass"
       fontSize="xs"
       fontVariantNumeric="tabular-nums"
     >
@@ -415,19 +416,21 @@ function BudgetLabel({
   viewBox,
   text,
   fill,
+  stroke,
   textColor,
 }: {
   viewBox?: ChartViewBox;
   text: string;
   fill: string;
+  stroke: string;
   textColor: string;
 }) {
   if (viewBox?.x === undefined || viewBox.y === undefined) {
     return null;
   }
 
-  const width = text.length * 6.4 + 16;
-  const height = 20;
+  const width = text.length * 6.4 + 18;
+  const height = 22;
   const right = viewBox.x + (viewBox.width ?? 0);
 
   return (
@@ -437,8 +440,9 @@ function BudgetLabel({
         y={viewBox.y - height - 4}
         width={width}
         height={height}
-        rx={10}
+        rx={11}
         fill={fill}
+        stroke={stroke}
       />
       <text
         x={right - width / 2}
@@ -455,7 +459,10 @@ function BudgetLabel({
   );
 }
 
-/** Today's point: a dot with a soft halo and today's amount above it. */
+/**
+ * Today's point: a glowing dot with today's amount above it. With motion on,
+ * a soft ring pulses out three times after the line has drawn in.
+ */
 function TodayMarker({
   cx,
   cy,
@@ -463,6 +470,7 @@ function TodayMarker({
   ring,
   textColor,
   label,
+  pulse,
 }: {
   cx?: number;
   cy?: number;
@@ -470,6 +478,7 @@ function TodayMarker({
   ring: string;
   textColor: string;
   label: string;
+  pulse: boolean;
 }) {
   if (cx === undefined || cy === undefined) {
     return <g />;
@@ -477,7 +486,22 @@ function TodayMarker({
 
   return (
     <g>
-      <circle cx={cx} cy={cy} r={11} fill={color} fillOpacity={0.2} />
+      {pulse ? (
+        <circle
+          cx={cx}
+          cy={cy}
+          r={8}
+          fill={color}
+          style={{
+            transformBox: "fill-box",
+            transformOrigin: "center",
+            opacity: 0,
+            animation: "today-pulse 1.6s ease-out 0.9s 3",
+          }}
+        />
+      ) : null}
+      <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.16} />
+      <circle cx={cx} cy={cy} r={8} fill={color} fillOpacity={0.24} />
       <circle
         cx={cx}
         cy={cy}
@@ -488,11 +512,16 @@ function TodayMarker({
       />
       <text
         x={cx}
-        y={cy - 16}
+        y={cy - 18}
         textAnchor="middle"
         fontSize={12}
         fontWeight={700}
         fill={textColor}
+        // A card-coloured outline keeps the label legible over the line.
+        stroke={ring}
+        strokeWidth={4}
+        paintOrder="stroke"
+        strokeLinejoin="round"
       >
         {label}
       </text>

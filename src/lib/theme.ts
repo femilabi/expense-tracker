@@ -121,6 +121,40 @@ const config = defineConfig({
           fg: "{colors.brand.red}",
         }),
       },
+      // "Soft glass" surfaces: navy-tinted layered shadows plus a white
+      // inner highlight along the top edge.
+      shadows: {
+        glass: {
+          value:
+            "inset 0 1px 0 color-mix(in srgb, {colors.brand.white} 90%, transparent), 0 1px 2px color-mix(in srgb, {colors.brand.navy} 6%, transparent), 0 12px 32px -16px color-mix(in srgb, {colors.brand.navy} 22%, transparent)",
+        },
+        "glass.badge": {
+          value:
+            "inset 0 1px 0 color-mix(in srgb, {colors.brand.white} 80%, transparent), 0 1px 2px color-mix(in srgb, {colors.brand.teal} 18%, transparent)",
+        },
+      },
+    },
+    keyframes: {
+      // Cards fade and rise into place on page load.
+      "glass-rise": {
+        from: { opacity: 0, transform: "translateY(12px)" },
+        to: { opacity: 1, transform: "translateY(0)" },
+      },
+      // The page mesh drifts very slowly.
+      "mesh-drift": {
+        "0%": { transform: "translate3d(0, 0, 0) scale(1)" },
+        "100%": { transform: "translate3d(-2%, 1.5%, 0) scale(1.04)" },
+      },
+      // Progress fills grow from the left on load.
+      "bar-grow": {
+        from: { transform: "scaleX(0)" },
+        to: { transform: "scaleX(1)" },
+      },
+      // A soft ring expanding from the chart's "today" point.
+      "today-pulse": {
+        "0%": { transform: "scale(0.6)", opacity: 0.45 },
+        "100%": { transform: "scale(2.4)", opacity: 0 },
+      },
     },
   },
 });

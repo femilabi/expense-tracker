@@ -5,7 +5,9 @@ import type { BudgetMonth } from "@/lib/budgets";
 import { formatCurrency } from "@/lib/format";
 
 import { BudgetProgressBar } from "@/components/budget/budget-progress-bar";
+import { AnimatedNumber } from "@/components/shared/animated-number";
 import { COLORS, CSS_COLORS } from "@/components/shared/colors";
+import { TargetIcon } from "@/components/shared/icons";
 
 import { DashboardCard, DashboardCardHeader } from "./dashboard-card";
 import { EmptyState } from "./empty-state";
@@ -20,14 +22,17 @@ export function BudgetProgressCard({ budgetMonth }: BudgetProgressCardProps) {
   const { total, unbudgetedSpent } = summarizeBudgets(budgetMonth.categories);
 
   return (
-    <DashboardCard>
-      <DashboardCardHeader title="Budget progress" />
+    <DashboardCard index={2}>
+      <DashboardCardHeader title="Budget progress" icon={<TargetIcon />} />
 
       <Box mt="5">
         {total.budget === null ||
         total.remaining === null ||
         total.percentUsed === null ? (
-          <EmptyState message="No budget set for this month. Add budgets on the Budget page to track your progress." />
+          <EmptyState
+            message="No budget set for this month. Add budgets on the Budget page to track your progress."
+            icon={<TargetIcon size={22} />}
+          />
         ) : (
           <>
             <Flex justify="space-between" align="flex-end" gap="3" mb="3">
@@ -42,24 +47,33 @@ export function BudgetProgressCard({ budgetMonth }: BudgetProgressCardProps) {
               </Text>
 
               <Text
-                fontSize="2xl"
+                fontSize={{ base: "2xl", md: "3xl" }}
                 fontWeight="bold"
                 lineHeight="1"
                 letterSpacing="tight"
                 color={total.isOverBudget ? COLORS.danger : COLORS.primary}
                 fontVariantNumeric="tabular-nums"
               >
-                {formatPercentUsed(total.percentUsed)}
+                <AnimatedNumber
+                  value={total.percentUsed}
+                  format={formatPercentUsed}
+                />
               </Text>
             </Flex>
 
-            <BudgetProgressBar label="Monthly" progress={total} />
+            <BudgetProgressBar
+              label="Monthly"
+              progress={total}
+              variant="glow"
+            />
 
             <Text
               mt="3"
               fontSize="sm"
               fontWeight="medium"
-              color={total.isOverBudget ? COLORS.danger : CSS_COLORS.foreground}
+              color={
+                total.isOverBudget ? "danger.hover" : CSS_COLORS.foreground
+              }
               fontVariantNumeric="tabular-nums"
             >
               {total.isOverBudget

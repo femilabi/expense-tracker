@@ -2,7 +2,7 @@ import { Box, Heading, Stack, Text } from "@chakra-ui/react";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 
-import { metaLabelStyles } from "@/components/shared/styles";
+import { glassPageStyles, metaLabelStyles } from "@/components/shared/styles";
 import { getBudgetMonth } from "@/lib/budgets";
 import { getDashboardData } from "@/lib/dashboard";
 import { formatMonth, formatShortMonth } from "@/lib/format";
@@ -55,7 +55,12 @@ export default async function Dashboard() {
   };
 
   return (
-    <Box minH="100vh" bg="bg.subtle" p={{ base: 4, md: 6 }}>
+    <Box
+      minH="100vh"
+      bg="bg.subtle"
+      p={{ base: 4, md: 6 }}
+      {...glassPageStyles}
+    >
       {/* Header */}
       <Box
         mb="8"
