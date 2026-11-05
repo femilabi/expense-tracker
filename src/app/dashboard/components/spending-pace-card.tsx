@@ -7,7 +7,6 @@ import {
   Area,
   CartesianGrid,
   ComposedChart,
-  Line,
   ReferenceDot,
   ReferenceLine,
   Tooltip,
@@ -72,7 +71,6 @@ const STATUS_STYLES: Record<
   },
 };
 
-const LAST_MONTH_COLOR = CSS_COLORS.muted;
 const BUDGET_COLOR = CSS_COLORS.muted;
 
 const subscribeToMotionPreference = (onChange: () => void) => {
@@ -108,12 +106,10 @@ export function SpendingPaceCard({
   // useId contains colons, which aren't safe inside an SVG url(#...) reference.
   const gradientId = `pace-fill-${id.replace(/[^a-zA-Z0-9-]/g, "")}`;
 
+  // Only this month is drawn, so the axis stops at this month's last day.
   const chart = useChart({
-    data: pace.points,
-    series: [
-      { name: "thisMonth", label: "This month", color: styles.line },
-      { name: "lastMonth", label: "Last month", color: LAST_MONTH_COLOR },
-    ],
+    data: pace.points.slice(0, labels.daysInMonth),
+    series: [{ name: "thisMonth", label: "This month", color: styles.line }],
   });
 
   const today = pace.points.findLast((point) => point.thisMonth !== null);
@@ -270,7 +266,7 @@ export function SpendingPaceCard({
                 <XAxis
                   dataKey={chart.key("day")}
                   type="number"
-                  domain={[1, pace.points.length]}
+                  domain={[1, labels.daysInMonth]}
                   ticks={[1, 10, 20, labels.daysInMonth]}
                   tickFormatter={(day: number) =>
                     day === 1 ? `${labels.thisMonth} 1` : String(day)
@@ -322,21 +318,6 @@ export function SpendingPaceCard({
                     )}
                   />
                 ) : null}
-                <Line
-                  type="monotone"
-                  dataKey={chart.key("lastMonth")}
-                  stroke={LAST_MONTH_COLOR}
-                  strokeWidth={1.5}
-                  dot={false}
-                  activeDot={{
-                    r: 4,
-                    fill: LAST_MONTH_COLOR,
-                    stroke: CSS_COLORS.card,
-                    strokeWidth: 2,
-                  }}
-                  isAnimationActive={animate}
-                  animationDuration={800}
-                />
                 <Area
                   type="monotone"
                   dataKey={chart.key("thisMonth")}
@@ -376,11 +357,6 @@ export function SpendingPaceCard({
               </ComposedChart>
             </Chart.Root>
           </Box>
-
-          <HStack mt="3" gap="4" wrap="wrap" aria-hidden="true">
-            <LegendDot color={styles.line} label="This month" />
-            <LegendDot color={LAST_MONTH_COLOR} label="Last month" />
-          </HStack>
         </>
       )}
     </Box>
@@ -402,17 +378,6 @@ function StatChip({ bg, children }: { bg: string; children: React.ReactNode }) {
     >
       {children}
     </Text>
-  );
-}
-
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <Flex align="center" gap="2">
-      <Box boxSize="2.5" borderRadius="full" bg={color} />
-      <Text fontSize="xs" color={CSS_COLORS.muted}>
-        {label}
-      </Text>
-    </Flex>
   );
 }
 
