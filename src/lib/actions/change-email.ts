@@ -14,6 +14,7 @@ import {
   type EmailChangeTokenState,
 } from "@/lib/definitions";
 import {
+  sendEmailChangeCompletedEmail,
   sendEmailChangedNoticeEmail,
   sendEmailChangeVerificationEmail,
   sendEmailRestoredEmail,
@@ -297,6 +298,7 @@ export async function confirmEmailChange(
       undoToken,
       formatExpiry(undoExpiresAt),
     );
+    await sendEmailChangeCompletedEmail(request.newEmail);
   });
 
   // Clears the session cookie on this device too, then redirects.

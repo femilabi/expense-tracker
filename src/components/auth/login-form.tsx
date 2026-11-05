@@ -28,8 +28,8 @@ export default function LoginForm() {
   const [state, formAction, pending] = useActionState(login, undefined);
   const searchParams = useSearchParams();
   const notice =
-    searchParams.get("registered") === "1"
-      ? "Account created. You can log in now."
+    searchParams.get("verified") === "1"
+      ? "Email verified. Your account is ready, please log in."
       : searchParams.get("passwordChanged") === "1"
         ? "Password updated. Please log in again."
         : searchParams.get("reset") === "1"

@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => {
       restoredEmail: string;
       resetToken?: string;
     }[],
+    completedEmails: [] as string[],
   };
 });
 
@@ -101,6 +102,10 @@ vi.mock("@/lib/email", () => ({
   ) => {
     mocks.restoredEmails.push({ to, restoredEmail, resetToken });
   },
+  sendEmailChangeCompletedEmail: async (to: string) => {
+    mocks.completedEmails.push(to);
+  },
+  sendSignInNotificationEmail: async () => {},
 }));
 
 vi.mock("@/lib/rate-limit", () => ({
@@ -221,6 +226,7 @@ beforeEach(async () => {
   mocks.verificationEmails = [];
   mocks.changedNotices = [];
   mocks.restoredEmails = [];
+  mocks.completedEmails = [];
 
   const passwordHash = await bcrypt.hash(PASSWORD, 4);
   emailCounter++;
@@ -373,6 +379,7 @@ describe("confirming an email change", () => {
         undoExpiresAt: "Thu, 5 Nov 2026, 12:00 UTC",
       },
     ]);
+    expect(mocks.completedEmails).toEqual(["new@example.com"]);
     expect(fakeDb.getEmailChangeUndos(userId)).toMatchObject([
       {
         oldEmail: email,

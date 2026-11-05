@@ -67,6 +67,7 @@ vi.mock("@/lib/email", () => ({
   sendAccountDeletedEmail: async (to: string) => {
     mocks.deletedEmails.push(to);
   },
+  sendSignInNotificationEmail: async () => {},
 }));
 
 vi.mock("@/lib/rate-limit", () => ({

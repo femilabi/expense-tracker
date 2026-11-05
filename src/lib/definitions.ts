@@ -27,6 +27,27 @@ export type SignupFormState =
     }
   | undefined;
 
+export const SignupCodeSchema = z.object({
+  code: z
+    .string()
+    .transform((value) => value.replace(/\s+/g, ""))
+    .pipe(
+      z.string().regex(/^\d{6}$/, {
+        error: "Enter the 6-digit code from your email.",
+      }),
+    ),
+});
+
+export type SignupCodeState =
+  | {
+      errors?: {
+        code?: string[];
+      };
+      message?: string;
+      tone?: "error" | "info";
+    }
+  | undefined;
+
 export const LoginFormSchema = z.object({
   email: z.email({ error: "Please enter a valid email." }).trim(),
   password: z.string().min(1, { error: "Password is required." }),
