@@ -1,6 +1,6 @@
 "use client";
 
-import { Grid } from "@chakra-ui/react";
+import { Grid, Stack } from "@chakra-ui/react";
 
 import type { BudgetMonth } from "@/lib/budgets";
 import type { RecentTransaction } from "@/lib/recent-transactions";
@@ -33,7 +33,7 @@ export function DashboardSections({
   currency,
 }: DashboardSectionsProps) {
   return (
-    <>
+    <Stack mt="8" gap="6">
       <SpendingPaceCard
         pace={spendingPace}
         summary={spendingPaceSummary}
@@ -43,7 +43,6 @@ export function DashboardSections({
 
       {/* Categories and Budget */}
       <Grid
-        mt="8"
         templateColumns={{
           base: "1fr",
           lg: "repeat(2, 1fr)",
@@ -59,6 +58,6 @@ export function DashboardSections({
         transactions={recentTransactions}
         currency={currency}
       />
-    </>
+    </Stack>
   );
 }

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Chart, useChart } from "@chakra-ui/charts";
-import { Box, Flex, Heading, HStack, Stack, Text } from "@chakra-ui/react";
+import { Box, HStack, Stack, Text } from "@chakra-ui/react";
 import {
   Area,
   CartesianGrid,
@@ -29,6 +29,11 @@ import {
 
 import { CSS_COLORS, cssTint } from "@/components/shared/colors";
 
+import {
+  DashboardCard,
+  DashboardCardHeader,
+  pillStyles,
+} from "./dashboard-card";
 import { EmptyState } from "./empty-state";
 
 export interface SpendingPaceLabels {
@@ -121,49 +126,28 @@ export function SpendingPaceCard({
   const animate = !reduceMotion;
 
   return (
-    <Box
-      as="section"
-      aria-labelledby={`${id}-title`}
-      mt="8"
-      bg={CSS_COLORS.card}
-      p="6"
-      borderRadius="2xl"
-      shadow="md"
-      border="1px solid"
-      borderColor={CSS_COLORS.border}
-    >
-      <Flex justify="space-between" align="center" gap="3" wrap="wrap">
-        <Heading id={`${id}-title`} size="lg" color={CSS_COLORS.foreground}>
-          Your spending this month
-        </Heading>
-        {!pace.isEmpty ? (
-          <Flex
-            as="span"
-            align="center"
-            gap="2"
-            px="3"
-            py="1"
-            borderRadius="full"
-            bg={styles.pillBg}
-            color={CSS_COLORS.foreground}
-            fontSize="sm"
-            fontWeight="semibold"
-            whiteSpace="nowrap"
-          >
-            <Box
-              as="span"
-              boxSize="2"
-              borderRadius="full"
-              bg={styles.line}
-              aria-hidden="true"
-            />
-            {styles.label}
-          </Flex>
-        ) : null}
-      </Flex>
+    <DashboardCard aria-labelledby={`${id}-title`}>
+      <DashboardCardHeader
+        title="Your spending this month"
+        titleId={`${id}-title`}
+        action={
+          !pace.isEmpty ? (
+            <Text as="span" {...pillStyles} bg={styles.pillBg}>
+              <Box
+                as="span"
+                boxSize="2"
+                borderRadius="full"
+                bg={styles.line}
+                aria-hidden="true"
+              />
+              {styles.label}
+            </Text>
+          ) : null
+        }
+      />
 
       {pace.isEmpty ? (
-        <Box mt="6">
+        <Box mt="5">
           <EmptyState message="No spending this month or last month yet." />
         </Box>
       ) : (
@@ -173,6 +157,7 @@ export function SpendingPaceCard({
               fontSize={{ base: "3xl", md: "4xl" }}
               fontWeight="bold"
               lineHeight="1.1"
+              letterSpacing="tight"
               color={CSS_COLORS.foreground}
               fontVariantNumeric="tabular-nums"
             >
@@ -180,6 +165,7 @@ export function SpendingPaceCard({
             </Text>
             <Text
               mt="1"
+              fontSize="sm"
               color={CSS_COLORS.muted}
               fontVariantNumeric="tabular-nums"
             >
@@ -231,6 +217,7 @@ export function SpendingPaceCard({
           <Text
             id={summaryId}
             mt="4"
+            lineHeight="1.6"
             color={CSS_COLORS.foreground}
             fontVariantNumeric="tabular-nums"
           >
@@ -359,23 +346,13 @@ export function SpendingPaceCard({
           </Box>
         </>
       )}
-    </Box>
+    </DashboardCard>
   );
 }
 
 function StatChip({ bg, children }: { bg: string; children: React.ReactNode }) {
   return (
-    <Text
-      as="span"
-      px="3"
-      py="1.5"
-      borderRadius="lg"
-      bg={bg}
-      color={CSS_COLORS.foreground}
-      fontSize="sm"
-      fontWeight="medium"
-      fontVariantNumeric="tabular-nums"
-    >
+    <Text as="span" {...pillStyles} fontWeight="medium" bg={bg}>
       {children}
     </Text>
   );
