@@ -9,11 +9,15 @@ import type { SpendingPace } from "@/lib/spending-pace";
 import { BudgetProgressCard } from "./budget-progress-card";
 import { RecentTransactionsCard } from "./recent-transactions-card";
 import { SpendingCategoriesCard } from "./spending-categories-card";
-import { SpendingPaceCard } from "./spending-pace-card";
+import {
+  SpendingPaceCard,
+  type SpendingPaceLabels,
+} from "./spending-pace-card";
 
 interface DashboardSectionsProps {
   spendingPace: SpendingPace;
   spendingPaceSummary: string;
+  spendingPaceLabels: SpendingPaceLabels;
   budgetMonth: BudgetMonth;
   recentTransactions: RecentTransaction[];
   currency: string;
@@ -23,6 +27,7 @@ interface DashboardSectionsProps {
 export function DashboardSections({
   spendingPace,
   spendingPaceSummary,
+  spendingPaceLabels,
   budgetMonth,
   recentTransactions,
   currency,
@@ -32,6 +37,7 @@ export function DashboardSections({
       <SpendingPaceCard
         pace={spendingPace}
         summary={spendingPaceSummary}
+        labels={spendingPaceLabels}
         currency={currency}
       />
 

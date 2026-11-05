@@ -38,6 +38,25 @@ export function formatCurrency(amount: number, currency: string): string {
   }
 }
 
+/** Whole amounts for chart labels, such as "$1,200". */
+export function formatWholeCurrency(amount: number, currency: string): string {
+  const options: Intl.NumberFormatOptions = {
+    style: "currency",
+    maximumFractionDigits: 0,
+  };
+
+  try {
+    return new Intl.NumberFormat("en-US", { ...options, currency }).format(
+      amount,
+    );
+  } catch {
+    return new Intl.NumberFormat("en-US", {
+      ...options,
+      currency: DEFAULT_CURRENCY,
+    }).format(amount);
+  }
+}
+
 /** Short axis labels such as "$1.2K". */
 export function formatCompactCurrency(
   amount: number,

@@ -5,8 +5,8 @@ import { connection } from "next/server";
 import { metaLabelStyles } from "@/components/shared/styles";
 import { getBudgetMonth } from "@/lib/budgets";
 import { getDashboardData } from "@/lib/dashboard";
-import { formatMonth } from "@/lib/format";
-import { getCurrentMonth } from "@/lib/month";
+import { formatMonth, formatShortMonth } from "@/lib/format";
+import { getCurrentMonth, monthStart, shiftMonth } from "@/lib/month";
 import { getCurrentUser } from "@/lib/session";
 import {
   buildSpendingPace,
@@ -46,6 +46,13 @@ export default async function Dashboard() {
     lastMonth: dailySpending.lastMonth,
     budget: getPaceBudget(budgetMonth.categories),
   });
+  const spendingPaceLabels = {
+    thisMonth: formatShortMonth(monthStart(currentMonth)),
+    lastMonth: formatShortMonth(monthStart(shiftMonth(currentMonth, -1))),
+    daysInMonth: new Date(
+      Date.UTC(currentMonth.year, currentMonth.month, 0),
+    ).getUTCDate(),
+  };
 
   return (
     <Box minH="100vh" bg="bg.subtle" p={{ base: 4, md: 6 }}>
@@ -77,6 +84,7 @@ export default async function Dashboard() {
           spendingPace,
           summary.currency,
         )}
+        spendingPaceLabels={spendingPaceLabels}
         budgetMonth={budgetMonth}
         recentTransactions={recentTransactions}
         currency={summary.currency}

@@ -5,7 +5,9 @@ import type { Category } from "@/lib/categories";
 import {
   buildSpendingPace,
   describeSpendingPace,
+  getLastMonthComparison,
   getPaceBudget,
+  getSpendingStatus,
   type DailySpend,
   type PaceBudget,
   type SpendingPace,
@@ -232,10 +234,93 @@ describe("getPaceBudget", () => {
   });
 });
 
+describe("getSpendingStatus", () => {
+  const budget: PaceBudget = { categories: ["FOOD"], total: 1200 };
+
+  it("is under budget while spending is below the budget", () => {
+    const result = pace({ budget, thisMonth: [spend("2026-11-05", 470)] });
+
+    expect(getSpendingStatus(result)).toBe("under");
+  });
+
+  it("is still under budget when spending exactly matches the budget", () => {
+    const result = pace({ budget, thisMonth: [spend("2026-11-05", 1200)] });
+
+    expect(getSpendingStatus(result)).toBe("under");
+  });
+
+  it("is over budget only once spending exceeds the budget", () => {
+    const result = pace({ budget, thisMonth: [spend("2026-11-05", 1200.01)] });
+
+    expect(getSpendingStatus(result)).toBe("over");
+  });
+
+  it("ignores how far through the month we are", () => {
+    // Rent on the 1st uses most of the budget, but nothing is exceeded.
+    const result = pace({
+      today: 2,
+      budget: { categories: ["RENT"], total: 1000 },
+      thisMonth: [spend("2026-11-01", 900, "RENT")],
+    });
+
+    expect(getSpendingStatus(result)).toBe("under");
+  });
+
+  it("reports no budget set when there are no budgets", () => {
+    const result = pace({ thisMonth: [spend("2026-11-05", 5000)] });
+
+    expect(getSpendingStatus(result)).toBe("none");
+  });
+});
+
+describe("getLastMonthComparison", () => {
+  it("reports less than at this point last month", () => {
+    const result = pace({
+      thisMonth: [spend("2026-11-05", 470)],
+      lastMonth: [spend("2026-10-03", 530), spend("2026-10-25", 300)],
+    });
+
+    expect(getLastMonthComparison(result)).toEqual({
+      direction: "less",
+      amount: 60,
+    });
+  });
+
+  it("reports more than at this point last month", () => {
+    const result = pace({
+      thisMonth: [spend("2026-11-05", 200)],
+      lastMonth: [spend("2026-10-05", 150)],
+    });
+
+    expect(getLastMonthComparison(result)).toEqual({
+      direction: "more",
+      amount: 50,
+    });
+  });
+
+  it("reports the same, compared to the cent", () => {
+    const result = pace({
+      thisMonth: [spend("2026-11-05", 0.1), spend("2026-11-05", 0.2)],
+      lastMonth: [spend("2026-10-01", 0.3)],
+    });
+
+    expect(getLastMonthComparison(result)).toEqual({
+      direction: "same",
+      amount: 0,
+    });
+  });
+
+  it("is null when last month had no spending", () => {
+    const result = pace({ thisMonth: [spend("2026-11-05", 470)] });
+
+    expect(getLastMonthComparison(result)).toBeNull();
+  });
+});
+
 describe("describeSpendingPace", () => {
   const budget: PaceBudget = { categories: ["FOOD"], total: 1200 };
 
-  it("reports spending against the budget and less than last month", () => {
+  it("says how much less than at this point last month", () => {
     const result = pace({
       budget,
       thisMonth: [spend("2026-11-05", 470)],
@@ -243,48 +328,53 @@ describe("describeSpendingPace", () => {
     });
 
     expect(describeSpendingPace(result, "USD")).toBe(
-      "You've spent $470.00 of $1,200.00 so far, $60.00 less than at this point last month.",
+      "You've spent $60.00 less than at this point last month.",
     );
   });
 
-  it("reports more than last month", () => {
+  it("says how much more than at this point last month", () => {
     const result = pace({
       thisMonth: [spend("2026-11-05", 200)],
       lastMonth: [spend("2026-10-05", 150)],
     });
 
     expect(describeSpendingPace(result, "USD")).toBe(
-      "You've spent $200.00 so far this month, $50.00 more than at this point last month.",
+      "You've spent $50.00 more than at this point last month.",
     );
   });
 
-  it("reports the same as last month", () => {
+  it("says when spending is the same as last month", () => {
     const result = pace({
       thisMonth: [spend("2026-11-05", 99.99)],
       lastMonth: [spend("2026-10-01", 99.99)],
     });
 
     expect(describeSpendingPace(result, "USD")).toBe(
-      "You've spent $99.99 so far this month, the same as at this point last month.",
+      "You've spent the same as at this point last month.",
     );
   });
 
-  it("leaves out the comparison when last month had no spending", () => {
+  it("says what's left when under budget with nothing from last month", () => {
     const result = pace({ budget, thisMonth: [spend("2026-11-05", 470)] });
 
     expect(describeSpendingPace(result, "USD")).toBe(
-      "You've spent $470.00 of $1,200.00 so far.",
+      "You have $730.00 left to spend this month.",
     );
   });
 
-  it("shows the real amount when over budget", () => {
-    const result = pace({
-      budget,
-      thisMonth: [spend("2026-11-05", 1350)],
-    });
+  it("says how far over when over budget with nothing from last month", () => {
+    const result = pace({ budget, thisMonth: [spend("2026-11-05", 1350)] });
 
     expect(describeSpendingPace(result, "USD")).toBe(
-      "You've spent $1,350.00 of $1,200.00 so far.",
+      "You're $150.00 over your budget this month.",
+    );
+  });
+
+  it("says there's nothing to compare with when no budget and no last month", () => {
+    const result = pace({ thisMonth: [spend("2026-11-05", 470)] });
+
+    expect(describeSpendingPace(result, "USD")).toBe(
+      "There's no spending from last month to compare with yet.",
     );
   });
 
@@ -309,10 +399,13 @@ describe("describeSpendingPace", () => {
   });
 
   it("formats with the profile currency", () => {
-    const result = pace({ thisMonth: [spend("2026-11-01", 15)] });
+    const result = pace({
+      thisMonth: [spend("2026-11-01", 20)],
+      lastMonth: [spend("2026-10-01", 5)],
+    });
 
     expect(describeSpendingPace(result, "EUR")).toBe(
-      "You've spent €15.00 so far this month.",
+      "You've spent €15.00 more than at this point last month.",
     );
   });
 });
