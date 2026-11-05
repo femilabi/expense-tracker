@@ -68,6 +68,7 @@ export const OWNED_TABLES = [
   "profiles",
   "incomes",
   "expenses",
+  "budgets",
   "monthlySummaries",
 ] as const;
 
@@ -96,6 +97,7 @@ function emptyState(): State {
     profiles: [],
     incomes: [],
     expenses: [],
+    budgets: [],
     monthlySummaries: [],
   };
 }
@@ -114,6 +116,7 @@ function cloneState(source: State): State {
     profiles: source.profiles.map((row) => ({ ...row })),
     incomes: source.incomes.map((row) => ({ ...row })),
     expenses: source.expenses.map((row) => ({ ...row })),
+    budgets: source.budgets.map((row) => ({ ...row })),
     monthlySummaries: source.monthlySummaries.map((row) => ({ ...row })),
   };
 }
@@ -456,6 +459,7 @@ const models = {
   profile: ownedModel("profiles"),
   income: ownedModel("incomes"),
   expense: ownedModel("expenses"),
+  budget: ownedModel("budgets"),
   monthlySummary: ownedModel("monthlySummaries"),
 };
 
@@ -532,6 +536,7 @@ export const fakeDb = {
       profiles: count(state.profiles),
       incomes: count(state.incomes),
       expenses: count(state.expenses),
+      budgets: count(state.budgets),
       monthlySummaries: count(state.monthlySummaries),
     };
   },

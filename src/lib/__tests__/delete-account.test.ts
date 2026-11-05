@@ -153,6 +153,7 @@ const NOTHING_DELETED = {
   profiles: 1,
   incomes: 1,
   expenses: 1,
+  budgets: 1,
   monthlySummaries: 1,
 };
 
@@ -211,6 +212,7 @@ describe("account deletion", () => {
       profiles: 0,
       incomes: 0,
       expenses: 0,
+      budgets: 0,
       monthlySummaries: 0,
     });
     expect(mocks.deletedEmails).toEqual([email]);

@@ -13,7 +13,6 @@ import {
   Text,
 } from "@chakra-ui/react";
 
-import type { Currency } from "@/app/expenses/expense-form/constants/currencies";
 import type { ExpenseInput } from "@/app/expenses/expense-form/expense-schema";
 import { COLORS } from "@/components/shared/colors";
 import { ExpenseForm } from "@/components/expense/expense-form";
@@ -27,7 +26,6 @@ import type { ExpenseRecord } from "../types";
 
 interface ExpenseEditorProps {
   expense?: ExpenseRecord | null;
-  defaultCurrency?: Currency;
 }
 
 function ExpenseEditorFrame({ children }: { children: React.ReactNode }) {
@@ -99,10 +97,7 @@ export function ExpenseNotFound() {
   );
 }
 
-export function ExpenseEditor({
-  expense = null,
-  defaultCurrency = "USD",
-}: ExpenseEditorProps) {
+export function ExpenseEditor({ expense = null }: ExpenseEditorProps) {
   const router = useRouter();
 
   const handleSubmit = async (values: ExpenseInput) => {
@@ -125,7 +120,6 @@ export function ExpenseEditor({
         heading={expense ? "Edit expense" : "Add expense"}
         submitLabel={expense ? "Save changes" : "Save expense"}
         initialCategory={expense?.category}
-        initialCurrency={expense?.currency ?? defaultCurrency}
         initialAmount={expense ? String(expense.amount) : undefined}
         initialDescription={expense?.description ?? undefined}
         initialExpenseDate={expense?.expenseDate}

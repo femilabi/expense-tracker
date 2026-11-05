@@ -34,3 +34,25 @@ export const COLORS = {
   focus: "brand.focusRing",
   backdrop: "bg.inverted/70",
 } as const;
+
+/**
+ * The colour variables defined in `app/globals.css`, read directly. Use these
+ * where a colour must come straight from globals.css (for example SVG charts).
+ */
+export const CSS_COLORS = {
+  background: "var(--background)",
+  foreground: "var(--foreground)",
+  primary: "var(--primary)",
+  secondary: "var(--secondary)",
+  success: "var(--success)",
+  warning: "var(--warning)",
+  danger: "var(--danger)",
+  card: "var(--card)",
+  border: "var(--border)",
+  muted: "var(--muted)",
+} as const;
+
+/** A light tint of a globals.css colour, for chip and pill backgrounds. */
+export function cssTint(color: string, percent = 14): string {
+  return `color-mix(in srgb, ${color} ${percent}%, transparent)`;
+}

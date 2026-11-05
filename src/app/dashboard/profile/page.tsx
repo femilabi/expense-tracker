@@ -38,7 +38,7 @@ export default async function ProfilePage() {
   }
 
   return (
-    <Stack gap={6} maxW="3xl">
+    <Stack gap={6} maxW="3xl" mx="auto">
       <Stack gap={1}>
         <Heading as="h1" size="2xl" color="brand.navy">
           Profile

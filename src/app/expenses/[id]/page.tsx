@@ -27,15 +27,13 @@ async function ExpenseDetailContent({ params }: ExpenseDetailContentProps) {
 
   const user = await getCurrentUser();
   const { id } = await params;
-  const { expense, currency } = await getUserExpense(user.id, id);
+  const { expense } = await getUserExpense(user.id, id);
 
   if (!expense) {
     return <ExpenseNotFound />;
   }
 
-  return (
-    <ExpenseEditor key={id} expense={expense} defaultCurrency={currency} />
-  );
+  return <ExpenseEditor key={id} expense={expense} />;
 }
 
 export default function ExpenseDetailPage({

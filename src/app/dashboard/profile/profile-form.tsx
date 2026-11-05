@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useActionState } from "react";
 import {
   Avatar,
@@ -14,12 +15,21 @@ import {
 } from "@chakra-ui/react";
 
 import { CURRENCY_OPTIONS } from "@/app/expenses/expense-form/constants/currencies";
-import { controlStyles, primaryButtonStyles } from "@/components/shared/styles";
+import { PencilIcon, PlusIcon } from "@/components/shared/icons";
+import {
+  controlStyles,
+  primaryButtonStyles,
+  secondaryButtonStyles,
+} from "@/components/shared/styles";
 import {
   updateProfile,
   type ProfileFormState,
   type ProfileFormValues,
 } from "@/lib/actions/update-profile";
+
+interface ProfileFormInitialValues extends ProfileFormValues {
+  avatarUrl: string;
+}
 
 const labelProps = {
   color: "brand.slate",
@@ -32,7 +42,7 @@ export function ProfileForm({
   initialProfile,
 }: {
   email: string;
-  initialProfile: ProfileFormValues;
+  initialProfile: ProfileFormInitialValues;
 }) {
   const [state, formAction, pending] = useActionState<
     ProfileFormState,
@@ -40,9 +50,58 @@ export function ProfileForm({
   >(updateProfile, { values: initialProfile });
 
   const values = state?.values ?? initialProfile;
+  const [avatarUrl, setAvatarUrl] = React.useState(initialProfile.avatarUrl);
+  const [isUploadingAvatar, setIsUploadingAvatar] = React.useState(false);
+  const [avatarUploadError, setAvatarUploadError] = React.useState<
+    string | null
+  >(null);
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
   const displayName = [values.firstName, values.lastName]
     .filter(Boolean)
     .join(" ");
+
+  const handleAvatarChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    if (file.size > 500 * 1024) {
+      setAvatarUploadError("Choose an image no larger than 500 KB.");
+      return;
+    }
+
+    setAvatarUploadError(null);
+    setIsUploadingAvatar(true);
+
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const response = await fetch("/api/profile/avatar", {
+        method: "POST",
+        body: formData,
+      });
+      const result: { avatarUrl?: string; error?: string } =
+        await response.json();
+
+      if (!response.ok || !result.avatarUrl) {
+        setAvatarUploadError(
+          result.error ?? "We couldn't upload your photo. Please try again.",
+        );
+        return;
+      }
+
+      setAvatarUrl(result.avatarUrl);
+    } catch {
+      setAvatarUploadError("We couldn't upload your photo. Please try again.");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   return (
     <Box
@@ -55,12 +114,43 @@ export function ProfileForm({
     >
       <Stack gap={8}>
         <Flex align="center" gap={5}>
-          <Avatar.Root size="2xl" colorPalette="teal">
-            {values.avatarUrl ? (
-              <Avatar.Image src={values.avatarUrl} alt={displayName} />
-            ) : null}
-            <Avatar.Fallback name={displayName || undefined} />
-          </Avatar.Root>
+          <Box position="relative" flexShrink={0}>
+            <Avatar.Root size="2xl" colorPalette="teal">
+              {avatarUrl ? (
+                <Avatar.Image src={avatarUrl} alt={displayName} />
+              ) : null}
+              <Avatar.Fallback name={displayName || undefined} />
+            </Avatar.Root>
+            <Button
+              type="button"
+              size="xs"
+              aria-label={
+                avatarUrl ? "Change profile photo" : "Add profile photo"
+              }
+              title={avatarUrl ? "Change profile photo" : "Add profile photo"}
+              {...secondaryButtonStyles}
+              position="absolute"
+              right="-1"
+              bottom="-1"
+              minW="8"
+              h="8"
+              p="0"
+              borderRadius="full"
+              disabled={isUploadingAvatar || pending}
+              loading={isUploadingAvatar}
+              onClick={() => avatarInputRef.current?.click()}
+            >
+              {avatarUrl ? <PencilIcon size={15} /> : <PlusIcon size={16} />}
+            </Button>
+            <Input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-label="Choose profile photo"
+              display="none"
+              onChange={handleAvatarChange}
+            />
+          </Box>
 
           <Stack gap={1} minW={0}>
             {displayName ? (
@@ -70,6 +160,9 @@ export function ProfileForm({
             ) : null}
             <Text color="brand.slate" fontSize="sm" overflowWrap="anywhere">
               {email}
+            </Text>
+            <Text color="brand.slate" fontSize="sm">
+              Add or change your profile photo. JPEG, PNG, or WebP up to 500 KB.
             </Text>
           </Stack>
         </Flex>
@@ -119,22 +212,15 @@ export function ProfileForm({
               </Field.Root>
             </Flex>
 
-            <Field.Root invalid={Boolean(state?.errors?.avatarUrl)}>
-              <Field.Label {...labelProps}>Avatar URL</Field.Label>
-              <Input
-                {...controlStyles}
-                name="avatarUrl"
-                type="url"
-                defaultValue={values.avatarUrl}
-                placeholder="https://example.com/avatar.jpg"
-                aria-label="Avatar URL"
-              />
-              <Field.ErrorText>{state?.errors?.avatarUrl?.[0]}</Field.ErrorText>
-            </Field.Root>
-
+            {avatarUploadError ? (
+              <Text aria-live="polite" color="red.600" fontSize="sm">
+                {avatarUploadError}
+              </Text>
+            ) : null}
             <Field.Root invalid={Boolean(state?.errors?.currency)}>
               <Field.Label {...labelProps}>Preferred currency</Field.Label>
               <select
+                key={values.currency}
                 name="currency"
                 defaultValue={values.currency || "USD"}
                 aria-label="Preferred currency"
@@ -163,7 +249,7 @@ export function ProfileForm({
               type="submit"
               loading={pending}
               loadingText="Saving…"
-              disabled={pending}
+              disabled={pending || isUploadingAvatar}
               {...primaryButtonStyles}
               alignSelf="flex-end"
             >

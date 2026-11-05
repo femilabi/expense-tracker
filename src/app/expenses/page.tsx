@@ -25,7 +25,7 @@ export default async function ExpensesPage() {
     <ExpensesHistory
       referenceDate={toLocalDateKey(now)}
       initialExpenses={expenses}
-      defaultCurrency={currency}
+      currency={currency}
     />
   );
 }

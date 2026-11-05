@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { ExpenseCategory } from "../../../generated/prisma/enums";
-import { CURRENCY_CODES } from "./constants/currencies";
 
 const AMOUNT_PATTERN = /^\d{1,12}(\.\d{1,2})?$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -12,7 +11,6 @@ function isValidDateOnly(value: string): boolean {
 
 export const expenseSchema = z.object({
   category: z.enum(ExpenseCategory, { error: "Select a category" }),
-  currency: z.enum(CURRENCY_CODES, { error: "Select a currency" }),
   amount: z
     .string()
     .trim()

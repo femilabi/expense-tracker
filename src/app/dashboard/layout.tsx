@@ -91,6 +91,9 @@ export default async function DashboardLayout({
                 <Link href="/income">Income</Link>
               </ChakraLink>
               <ChakraLink asChild {...navLinkStyles}>
+                <Link href="/budget">Budget</Link>
+              </ChakraLink>
+              <ChakraLink asChild {...navLinkStyles}>
                 <Link href="/dashboard/profile">Profile</Link>
               </ChakraLink>
               <ChakraLink asChild {...navLinkStyles}>

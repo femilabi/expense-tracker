@@ -2,7 +2,6 @@
 
 import { Dialog } from "@chakra-ui/react";
 
-import type { Currency } from "@/app/expenses/expense-form/constants/currencies";
 import type { ExpenseInput } from "@/app/expenses/expense-form/expense-schema";
 import type { ExpenseRecord } from "@/app/expenses/types";
 
@@ -15,7 +14,6 @@ interface ExpenseDialogProps {
   onClose: () => void;
   onSubmit: (values: ExpenseInput) => void | Promise<void>;
   expense?: ExpenseRecord | null;
-  defaultCurrency?: Currency;
 }
 
 export function ExpenseDialog({
@@ -23,7 +21,6 @@ export function ExpenseDialog({
   onClose,
   onSubmit,
   expense = null,
-  defaultCurrency = "USD",
 }: ExpenseDialogProps) {
   const isEditing = expense !== null;
   const title = isEditing ? "Edit expense" : "Add expense";
@@ -68,7 +65,6 @@ export function ExpenseDialog({
             heading={title}
             submitLabel={isEditing ? "Save changes" : "Save expense"}
             initialCategory={expense?.category}
-            initialCurrency={expense?.currency ?? defaultCurrency}
             initialAmount={expense ? String(expense.amount) : undefined}
             initialDescription={expense?.description ?? undefined}
             initialExpenseDate={expense?.expenseDate}
