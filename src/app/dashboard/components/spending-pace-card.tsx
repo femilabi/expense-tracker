@@ -111,11 +111,7 @@ export function SpendingPaceCard({
   const animate = !reduceMotion;
 
   return (
-    <DashboardCard
-      index={0}
-      p={{ base: 4, md: 5 }}
-      aria-labelledby={`${id}-title`}
-    >
+    <DashboardCard index={0} aria-labelledby={`${id}-title`}>
       <DashboardCardHeader
         title="Your spending this month"
         titleId={`${id}-title`}
@@ -231,10 +227,15 @@ export function SpendingPaceCard({
             {summary}
           </Text>
 
-          <Box mt="3" role="img" aria-labelledby={`${figureId} ${summaryId}`}>
+          <Box
+            mt="2"
+            mx={{ base: "-1", md: "-2" }}
+            role="img"
+            aria-labelledby={`${figureId} ${summaryId}`}
+          >
             <Chart.Root
               chart={chart}
-              h={{ base: "190px", md: "230px" }}
+              h={{ base: "200px", md: "240px" }}
               aspectRatio="auto"
               css={{
                 "& .recharts-cartesian-axis-tick-value": { fontSize: "11px" },
@@ -248,7 +249,7 @@ export function SpendingPaceCard({
                 data={chart.data}
                 responsive
                 accessibilityLayer={false}
-                margin={{ top: 22, right: 8, bottom: 0, left: 0 }}
+                margin={{ top: 20, right: 4, bottom: 0, left: 0 }}
               >
                 <defs>
                   <Chart.Gradient
@@ -269,17 +270,19 @@ export function SpendingPaceCard({
                   dataKey={chart.key("day")}
                   type="number"
                   domain={[1, labels.daysInMonth]}
-                  ticks={[1, 10, 20, labels.daysInMonth]}
+                  ticks={[1, 8, 15, 22, labels.daysInMonth]}
                   tickFormatter={(day: number) =>
                     day === 1 ? `${labels.thisMonth} 1` : String(day)
                   }
                   tick={{ fill: CSS_COLORS.muted }}
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={8}
+                  height={22}
+                  tickMargin={6}
                 />
                 <YAxis
-                  width={48}
+                  width={40}
+                  tickMargin={4}
                   tickCount={4}
                   tick={{ fill: CSS_COLORS.muted }}
                   tickLine={false}
@@ -326,7 +329,7 @@ export function SpendingPaceCard({
                   type="monotone"
                   dataKey={chart.key("thisMonth")}
                   stroke={styles.line}
-                  strokeWidth={3}
+                  strokeWidth={2.5}
                   fill={`url(#${gradientId})`}
                   dot={false}
                   activeDot={{
@@ -392,10 +395,10 @@ function PaceTooltip({ active, payload, labels, currency }: PaceTooltipProps) {
 
   return (
     <Stack
-      gap="1"
-      maxW="15rem"
-      px="3.5"
-      py="2.5"
+      gap="0.5"
+      maxW="14rem"
+      px="3"
+      py="2"
       bg={`color-mix(in srgb, ${CSS_COLORS.card} 92%, transparent)`}
       backdropFilter="blur(12px)"
       borderWidth="1px"
@@ -508,7 +511,7 @@ function TodayMarker({
         <circle
           cx={cx}
           cy={cy}
-          r={8}
+          r={6}
           fill={color}
           style={{
             transformBox: "fill-box",
@@ -518,21 +521,20 @@ function TodayMarker({
           }}
         />
       ) : null}
-      <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.16} />
-      <circle cx={cx} cy={cy} r={8} fill={color} fillOpacity={0.24} />
+      <circle cx={cx} cy={cy} r={10} fill={color} fillOpacity={0.14} />
       <circle
         cx={cx}
         cy={cy}
-        r={5}
+        r={4}
         fill={color}
         stroke={ring}
         strokeWidth={2}
       />
       <text
         x={cx}
-        y={cy - 18}
+        y={cy - 14}
         textAnchor="middle"
-        fontSize={12}
+        fontSize={11}
         fontWeight={700}
         fill={textColor}
         // A card-coloured outline keeps the label legible over the line.
