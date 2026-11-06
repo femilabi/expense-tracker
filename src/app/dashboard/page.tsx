@@ -55,7 +55,13 @@ export default async function Dashboard() {
   };
 
   return (
-    <Box bg="bg.subtle" {...glassPageStyles}>
+    <Box
+      w="full"
+      px={{ base: 4, md: 6 }}
+      py={{ base: 4, md: 6 }}
+      bg="bg.subtle"
+      {...glassPageStyles}
+    >
       {/* Header */}
       <Box
         mb="8"

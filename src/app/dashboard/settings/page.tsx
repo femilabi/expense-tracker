@@ -49,7 +49,7 @@ export default async function SettingsPage() {
   const { email, pendingChange } = await getEmailSettings(id);
 
   return (
-    <Stack gap={6} w="full">
+    <Stack gap={6} w="full" px={{ base: 4, md: 6 }} py={{ base: 4, md: 6 }}>
       <Stack gap={1}>
         <Heading as="h1" size="2xl" color="brand.navy">
           Settings
