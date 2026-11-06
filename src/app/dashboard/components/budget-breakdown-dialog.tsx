@@ -16,13 +16,14 @@ import type { BudgetMonth } from "@/lib/budgets";
 import { formatMonth } from "@/lib/format";
 import { monthStart } from "@/lib/month";
 
-import { BudgetCategoryProgress } from "@/components/budget/budget-category-progress";
 import { COLORS } from "@/components/shared/colors";
 import {
   dialogSurfaceStyles,
   focusRing,
   secondaryButtonStyles,
 } from "@/components/shared/styles";
+
+import { BudgetCategoryProgress } from "./budget/budget-category-progress";
 
 interface BudgetBreakdownDialogProps {
   open: boolean;
@@ -105,7 +106,7 @@ export function BudgetBreakdownDialog({
 
             <Flex mt={6} justify="flex-end">
               <Button asChild {...secondaryButtonStyles}>
-                <Link href="/budget">Manage budgets</Link>
+                <Link href="/dashboard/budget">Manage budgets</Link>
               </Button>
             </Flex>
           </Dialog.Content>

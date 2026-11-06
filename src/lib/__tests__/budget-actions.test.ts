@@ -77,7 +77,9 @@ vi.mock("next/cache", () => ({
   },
 }));
 
-const { deleteBudget, saveBudget } = await import("@/app/budget/actions");
+const { deleteBudget, saveBudget } = await import(
+  "@/app/dashboard/budget/actions"
+);
 
 const USER_ID = "user-1";
 const OTHER_USER_ID = "user-2";
@@ -106,7 +108,10 @@ describe("saveBudget", () => {
 
     expect(result).toEqual({ success: true });
     expect(mocks.budgets).toEqual([{ ...foodNovember, amount: "100" }]);
-    expect(mocks.revalidatedPaths).toEqual(["/budget", "/dashboard"]);
+    expect(mocks.revalidatedPaths).toEqual([
+      "/dashboard/budget",
+      "/dashboard",
+    ]);
   });
 
   it("updates the existing budget instead of adding another", async () => {
@@ -201,7 +206,10 @@ describe("deleteBudget", () => {
     expect(mocks.budgets).toEqual([
       { ...foodNovember, userId: OTHER_USER_ID, amount: "300" },
     ]);
-    expect(mocks.revalidatedPaths).toEqual(["/budget", "/dashboard"]);
+    expect(mocks.revalidatedPaths).toEqual([
+      "/dashboard/budget",
+      "/dashboard",
+    ]);
   });
 
   it("reports a missing budget", async () => {

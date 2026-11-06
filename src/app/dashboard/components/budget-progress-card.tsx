@@ -4,11 +4,11 @@ import { formatPercentUsed, summarizeBudgets } from "@/lib/budget-math";
 import type { BudgetMonth } from "@/lib/budgets";
 import { formatCurrency } from "@/lib/format";
 
-import { BudgetProgressBar } from "@/components/budget/budget-progress-bar";
-import { AnimatedNumber } from "@/components/shared/animated-number";
 import { COLORS, CSS_COLORS } from "@/components/shared/colors";
 import { TargetIcon } from "@/components/shared/icons";
 
+import { AnimatedNumber } from "./animated-number";
+import { BudgetProgressBar } from "./budget/budget-progress-bar";
 import { DashboardCard, DashboardCardHeader } from "./dashboard-card";
 import { EmptyState } from "./empty-state";
 

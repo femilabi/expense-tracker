@@ -1,4 +1,4 @@
-import type { Currency } from "@/app/expenses/expense-form/constants/currencies";
+import type { Currency } from "@/app/dashboard/expenses/expense-form/constants/currencies";
 import { getBudgetProgress, type BudgetProgress } from "@/lib/budget-math";
 import { CATEGORY_OPTIONS, type Category } from "@/lib/categories";
 import { getAccountCurrency } from "@/lib/expenses";
