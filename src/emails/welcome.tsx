@@ -1,68 +1,68 @@
 import {
-    Button,
-    EmailLayout,
-    Heading,
-    LinkFallback,
-    Muted,
-    Paragraph,
+  Button,
+  EmailLayout,
+  Heading,
+  LinkFallback,
+  Muted,
+  Paragraph,
 } from "@/emails/components";
 import { renderEmail } from "@/emails/render";
 import { firstNameOf, type EmailTemplate } from "@/emails/utils";
 
 export type WelcomeEmailInput = {
-    name: string;
-    /** Absolute link to the dashboard, e.g. https://app.example.com/dashboard */
-    dashboardUrl: string;
+  name: string;
+  /** Absolute link to the dashboard, e.g. https://app.example.com/dashboard */
+  dashboardUrl: string;
 };
 
 const steps = [
-    ["Add your income", "so you can see what is left to spend."],
-    ["Log your expenses", "and sort them into categories."],
-    ["Set monthly budgets", "per category and track your progress."],
-    ["Pick your currency", "in your profile settings."],
+  ["Add your income", "so you can see what is left to spend."],
+  ["Log your expenses", "and sort them into categories."],
+  ["Set monthly budgets", "per category and track your progress."],
+  ["Pick your currency", "in your profile settings."],
 ] as const;
 
 export function WelcomeEmail({ name, dashboardUrl }: WelcomeEmailInput) {
-    return (
-        <EmailLayout>
-            <Heading>Welcome, {firstNameOf(name)}!</Heading>
-            <Paragraph>
-                Thanks for signing in to Expense Tracker. Here is how to get
-                started to the expenses:
-            </Paragraph>
-            <ul style={{ paddingLeft: 20, lineHeight: 1.6 }}>
-                {steps.map(([title, rest]) => (
-                    <li key={title}>
-                        <strong>{title}</strong> {rest}
-                    </li>
-                ))}
-            </ul>
-            <Button href={dashboardUrl}>Go to your dashboard</Button>
-            <LinkFallback href={dashboardUrl} />
-            <Muted>
-                If you did not create this account, reset your password or
-                contact support.
-            </Muted>
-        </EmailLayout>
-    );
+  return (
+    <EmailLayout>
+      <Heading>Welcome, {firstNameOf(name)}!</Heading>
+      <Paragraph>
+        Thanks for signing in to Expense Tracker. Here is how to get started to
+        the expenses:
+      </Paragraph>
+      <ul style={{ paddingLeft: 20, lineHeight: 1.6 }}>
+        {steps.map(([title, rest]) => (
+          <li key={title}>
+            <strong>{title}</strong> {rest}
+          </li>
+        ))}
+      </ul>
+      <Button href={dashboardUrl}>Go to your dashboard</Button>
+      <LinkFallback href={dashboardUrl} />
+      <Muted>
+        If you did not create this account, reset your password or contact
+        support.
+      </Muted>
+    </EmailLayout>
+  );
 }
 
 /** Welcomes the user after they sign in for the first time. */
 export function welcomeEmail(input: WelcomeEmailInput): EmailTemplate {
-    const firstName = firstNameOf(input.name);
+  const firstName = firstNameOf(input.name);
 
-    return {
-        subject: "Welcome to Expense Tracker",
-        html: renderEmail(<WelcomeEmail {...input} />),
-        text: [
-            `Welcome to Expense Tracker, ${firstName}!`,
-            "",
-            "Thanks for signing in. Here is how to get started:",
-            ...steps.map(([title, rest]) => `- ${title} ${rest}`),
-            "",
-            `Go to your dashboard: ${input.dashboardUrl}`,
-            "",
-            "If you did not create this account, reset your password or contact support.",
-        ].join("\n"),
-    };
+  return {
+    subject: "Welcome to Expense Tracker",
+    html: renderEmail(<WelcomeEmail {...input} />),
+    text: [
+      `Welcome to Expense Tracker, ${firstName}!`,
+      "",
+      "Thanks for signing in. Here is how to get started:",
+      ...steps.map(([title, rest]) => `- ${title} ${rest}`),
+      "",
+      `Go to your dashboard: ${input.dashboardUrl}`,
+      "",
+      "If you did not create this account, reset your password or contact support.",
+    ].join("\n"),
+  };
 }
