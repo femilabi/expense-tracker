@@ -242,8 +242,11 @@ afterEach(() => {
 
 describe("requesting an email change", () => {
   it("rejects a wrong password", async () => {
+    // The new email comes back so the form can show it again, the password
+    // never does.
     expect(await requestChange("new@example.com", "WrongPass9!")).toEqual({
       errors: { currentPassword: ["Current password is incorrect."] },
+      values: { newEmail: "new@example.com" },
     });
 
     expect(fakeDb.getEmailChangeRequest(userId)).toBeUndefined();
@@ -253,6 +256,8 @@ describe("requesting an email change", () => {
   it("rejects an email that is already in use, whatever its case", async () => {
     expect(await requestChange(`  ${otherEmail.toUpperCase()} `)).toEqual({
       errors: { newEmail: ["An account with this email already exists."] },
+      // Shown again exactly as typed.
+      values: { newEmail: `  ${otherEmail.toUpperCase()} ` },
     });
 
     expect(fakeDb.getEmailChangeRequest(userId)).toBeUndefined();
@@ -265,6 +270,7 @@ describe("requesting an email change", () => {
     expect(await requestChange("new@example.com")).toEqual({
       message: "We couldn't send the confirmation email. Please try again.",
       tone: "error",
+      values: { newEmail: "new@example.com" },
     });
 
     expect(fakeDb.getEmailChangeRequest(userId)).toBeUndefined();

@@ -26,6 +26,7 @@ import {
   getEmailChangeUndoExpiry,
   hashEmailChangeToken,
 } from "@/lib/email-change-token";
+import { keepFormValues } from "@/lib/form-values";
 import { prisma } from "@/lib/prisma";
 import {
   checkRateLimit,
@@ -76,6 +77,17 @@ function isUniqueViolation(error: unknown): boolean {
 
 export async function requestEmailChange(
   _state: ChangeEmailState,
+  formData: FormData,
+): Promise<ChangeEmailState> {
+  const result = await sendEmailChangeLink(formData);
+  // After an error the new email is shown again. After a send it clears.
+  if (result?.tone === "info") {
+    return result;
+  }
+  return { ...result, values: keepFormValues(formData, ["newEmail"]) };
+}
+
+async function sendEmailChangeLink(
   formData: FormData,
 ): Promise<ChangeEmailState> {
   // The account always comes from the session, never the form.

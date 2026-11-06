@@ -24,6 +24,8 @@ export type SignupFormState =
         password?: string[];
       };
       message?: string;
+      /** What was typed, shown again after an error. Never the password. */
+      values?: { name?: string; email?: string };
     }
   | undefined;
 
@@ -60,6 +62,8 @@ export type LoginFormState =
         password?: string[];
       };
       message?: string;
+      /** What was typed, shown again after an error. Never the password. */
+      values?: { email?: string };
     }
   | undefined;
 
@@ -74,6 +78,8 @@ export type ForgotPasswordState =
       };
       message?: string;
       tone?: "error" | "info";
+      /** What was typed, shown again after an error. */
+      values?: { email?: string };
     }
   | undefined;
 
@@ -170,6 +176,8 @@ export type ChangeEmailState =
       };
       message?: string;
       tone?: "error" | "info";
+      /** What was typed, shown again after an error. Never the password. */
+      values?: { newEmail?: string };
     }
   | undefined;
 

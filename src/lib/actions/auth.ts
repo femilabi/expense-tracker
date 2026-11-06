@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import * as z from "zod";
 
 import { signIn, signOut } from "@/auth";
+import { keepFormValues } from "@/lib/form-values";
 import { prisma } from "@/lib/prisma";
 import {
   LoginFormSchema,
@@ -28,6 +29,12 @@ export async function signup(
   _state: SignupFormState,
   formData: FormData,
 ): Promise<SignupFormState> {
+  // Success redirects, so every result that reaches the form is an error.
+  const result = await startSignup(formData);
+  return { ...result, values: keepFormValues(formData, ["name", "email"]) };
+}
+
+async function startSignup(formData: FormData): Promise<SignupFormState> {
   const validatedFields = SignupFormSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -81,6 +88,12 @@ export async function login(
   _state: LoginFormState,
   formData: FormData,
 ): Promise<LoginFormState> {
+  // Success redirects, so every result that reaches the form is an error.
+  const result = await signInWithPassword(formData);
+  return { ...result, values: keepFormValues(formData, ["email"]) };
+}
+
+async function signInWithPassword(formData: FormData): Promise<LoginFormState> {
   const validatedFields = LoginFormSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),

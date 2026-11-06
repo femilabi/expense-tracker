@@ -12,6 +12,7 @@ import {
   type ResetPasswordState,
 } from "@/lib/definitions";
 import { sendPasswordChangedEmail, sendPasswordResetEmail } from "@/lib/email";
+import { keepFormValues } from "@/lib/form-values";
 import { prisma } from "@/lib/prisma";
 import {
   checkRateLimit,
@@ -43,6 +44,15 @@ export async function requestPasswordReset(
   _state: ForgotPasswordState,
   formData: FormData,
 ): Promise<ForgotPasswordState> {
+  const result = await sendResetLink(formData);
+  // After an error the email is shown again. After a send it clears.
+  if (result?.tone === "info") {
+    return result;
+  }
+  return { ...result, values: keepFormValues(formData, ["email"]) };
+}
+
+async function sendResetLink(formData: FormData): Promise<ForgotPasswordState> {
   const validatedFields = ForgotPasswordSchema.safeParse({
     email: formData.get("email"),
   });

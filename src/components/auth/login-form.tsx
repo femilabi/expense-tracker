@@ -66,6 +66,7 @@ export default function LoginForm() {
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
+            defaultValue={state?.values?.email}
             {...inputStyles}
             aria-invalid={state?.errors?.email ? true : undefined}
           />

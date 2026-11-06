@@ -218,6 +218,7 @@ describe("signup with an email code", () => {
 
     expect(await startSignup(EMAIL.toUpperCase())).toEqual({
       message: "An account with this email already exists.",
+      values: { name: NAME, email: EMAIL.toUpperCase() },
     });
     expect(mocks.codeEmails).toEqual([]);
     expect(fakeDb.getPendingSignups()).toEqual([]);
@@ -228,9 +229,23 @@ describe("signup with an email code", () => {
 
     expect(await startSignup()).toEqual({
       message: "We couldn't send the verification email. Please try again.",
+      values: { name: NAME, email: EMAIL },
     });
     expect(fakeDb.getPendingSignups()).toEqual([]);
     expect(mocks.cookies.size).toBe(0);
+  });
+
+  it("keeps the name and email, but not the password, after an error", async () => {
+    const result = await run(
+      signup(undefined, form({ name: NAME, email: EMAIL, password: "abc" })),
+    );
+
+    expect(result).toMatchObject({
+      errors: { password: expect.any(Array) },
+      values: { name: NAME, email: EMAIL },
+    });
+    expect(JSON.stringify(result)).not.toContain('"abc"');
+    expect(fakeDb.getPendingSignups()).toEqual([]);
   });
 
   it("creates the account with the right code and sends a welcome email", async () => {
