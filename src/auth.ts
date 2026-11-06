@@ -55,7 +55,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const signInDetails = describeSignIn(request);
         after(async () => {
-          await sendSignInNotificationEmail(user.email, signInDetails);
+          await sendSignInNotificationEmail(
+            user.email,
+            signInDetails,
+            user.name,
+          );
         });
 
         // The version is read in the same query as the password hash, so a

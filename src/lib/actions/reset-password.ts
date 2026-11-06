@@ -174,7 +174,7 @@ export async function resetPassword(
   const passwordHash = await bcrypt.hash(password, 10);
   const changedAt = new Date();
 
-  let updatedUser: { id: string; email: string };
+  let updatedUser: { id: string; email: string; name: string };
   try {
     updatedUser = await prisma.$transaction(async (tx) => {
       // Claiming the token and updating the password happen in one transaction.
@@ -201,7 +201,7 @@ export async function resetPassword(
           passwordChangedAt: changedAt,
           sessionVersion: { increment: 1 },
         },
-        select: { id: true, email: true },
+        select: { id: true, email: true, name: true },
       });
     });
   } catch {
@@ -214,7 +214,7 @@ export async function resetPassword(
   }
 
   after(async () => {
-    await sendPasswordChangedEmail(updatedUser.email);
+    await sendPasswordChangedEmail(updatedUser.email, updatedUser.name);
   });
 
   redirect("/login?reset=1");
