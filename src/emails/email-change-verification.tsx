@@ -7,10 +7,13 @@ import {
   Paragraph,
 } from "@/emails/components";
 import { renderEmail } from "@/emails/render";
-import { firstNameOf, type EmailTemplate } from "@/emails/utils";
+import type { EmailTemplate } from "@/emails/utils";
 
+/**
+ * There's no name greeting: this goes to an address the account doesn't use
+ * yet, which may not belong to the account's owner.
+ */
 export type EmailChangeVerificationEmailInput = {
-  name: string;
   /** The new address the user wants to switch to. */
   newEmail: string;
   /** Absolute link to the confirm page, including the token. */
@@ -20,7 +23,6 @@ export type EmailChangeVerificationEmailInput = {
 };
 
 export function EmailChangeVerificationEmail({
-  name,
   newEmail,
   confirmUrl,
   expiresInMinutes,
@@ -29,18 +31,19 @@ export function EmailChangeVerificationEmail({
     <EmailLayout>
       <Heading>Confirm your new email</Heading>
       <Paragraph>
-        Hi {firstNameOf(name)}, you asked to change the email of your Expense
-        Tracker account to <strong>{newEmail}</strong>.
+        We received a request to change the email on an Expense Tracker account
+        to <strong>{newEmail}</strong>.
       </Paragraph>
-      <Paragraph>Confirm the change to start using this address:</Paragraph>
+      <Paragraph>If that was you, confirm the change:</Paragraph>
       <Button href={confirmUrl}>Confirm new email</Button>
       <Muted>
         This link expires in {expiresInMinutes} minutes and can only be used
-        once. Until you confirm, your account keeps using your current email.
+        once. Until you confirm, the account keeps using its current email.
       </Muted>
       <LinkFallback href={confirmUrl} />
       <Muted>
-        If you did not ask for this you can safely ignore this email.
+        If it wasn&apos;t you, you can safely ignore this email. Nothing will
+        change.
       </Muted>
     </EmailLayout>
   );
@@ -50,21 +53,19 @@ export function EmailChangeVerificationEmail({
 export function emailChangeVerificationEmail(
   input: EmailChangeVerificationEmailInput,
 ): EmailTemplate {
-  const firstName = firstNameOf(input.name);
-
   return {
     subject: "Confirm your new Expense Tracker email",
     html: renderEmail(<EmailChangeVerificationEmail {...input} />),
     text: [
       "Confirm your new Expense Tracker email",
       "",
-      `Hi ${firstName}, you asked to change the email of your Expense Tracker account to ${input.newEmail}.`,
+      `We received a request to change the email on an Expense Tracker account to ${input.newEmail}.`,
       "",
-      `Open this link to confirm: ${input.confirmUrl}`,
+      `If that was you, open this link to confirm: ${input.confirmUrl}`,
       "",
       `This link expires in ${input.expiresInMinutes} minutes and can only be used once.`,
-      "Until you confirm, your account keeps using your current email.",
-      "If you did not ask for this you can safely ignore this email.",
+      "Until you confirm, the account keeps using its current email.",
+      "If it wasn't you, you can safely ignore this email. Nothing will change.",
     ].join("\n"),
   };
 }

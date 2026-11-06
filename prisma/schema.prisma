@@ -71,6 +71,22 @@ model EmailChangeUndo {
   @@map("email_change_undos")
 }
 
+/// A signup waiting for its email code. The user row is only created once the
+/// code is confirmed, so unconfirmed signups never become accounts.
+model PendingSignup {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  codeHash     String   @map("code_hash")
+  attempts     Int      @default(0)
+  expiresAt    DateTime @map("expires_at")
+  lastSentAt   DateTime @map("last_sent_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("pending_signups")
+}
+
 model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String    @map("user_id")

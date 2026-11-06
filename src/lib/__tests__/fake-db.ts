@@ -1,6 +1,6 @@
 /**
- * In-memory stand-in for the parts of the Prisma client used by the password,
- * email change and account deletion flows. Interactive transactions run one at
+ * In-memory stand-in for the parts of the Prisma client used by the signup,
+ * password, email change and account deletion flows. Interactive transactions run one at
  * a time (like rows locked by the conditional updates in MySQL) and roll back
  * every change when they throw. Emails compare case-insensitively, like the
  * database collation.
@@ -44,6 +44,20 @@ export type EmailChangeUndoRow = {
   createdAt: Date;
 };
 
+export type PendingSignupRow = {
+  id: string;
+  email: string;
+  name: string;
+  passwordHash: string;
+  codeHash: string;
+  attempts: number;
+  expiresAt: Date;
+  lastSentAt: Date;
+  createdAt: Date;
+};
+
+type PendingSignupFields = Omit<PendingSignupRow, "id" | "createdAt">;
+
 /** A row of a table that only matters here because it belongs to a user. */
 export type OwnedRow = {
   id: string;
@@ -65,6 +79,7 @@ type State = {
   resetTokens: ResetTokenRow[];
   emailChangeRequests: EmailChangeRequestRow[];
   emailChangeUndos: EmailChangeUndoRow[];
+  pendingSignups: PendingSignupRow[];
 } & Record<OwnedTable, OwnedRow[]>;
 
 type UserWhere = { id?: string; email?: string };
@@ -78,6 +93,7 @@ function emptyState(): State {
     resetTokens: [],
     emailChangeRequests: [],
     emailChangeUndos: [],
+    pendingSignups: [],
     profiles: [],
     incomes: [],
     expenses: [],
@@ -96,6 +112,7 @@ function cloneState(source: State): State {
     resetTokens: source.resetTokens.map((token) => ({ ...token })),
     emailChangeRequests: source.emailChangeRequests.map((row) => ({ ...row })),
     emailChangeUndos: source.emailChangeUndos.map((row) => ({ ...row })),
+    pendingSignups: source.pendingSignups.map((row) => ({ ...row })),
     profiles: source.profiles.map((row) => ({ ...row })),
     incomes: source.incomes.map((row) => ({ ...row })),
     expenses: source.expenses.map((row) => ({ ...row })),
@@ -164,6 +181,23 @@ const models = {
     async findUnique({ where }: { where: UserWhere }) {
       const user = findUser(where);
       return user ? { ...user } : null;
+    },
+    async create({
+      data,
+    }: {
+      data: { name: string; email: string; passwordHash: string };
+    }) {
+      if (findUser({ email: data.email })) {
+        throw uniqueViolation("users.email");
+      }
+      const user: UserRow = {
+        id: `user-${nextId++}`,
+        passwordChangedAt: null,
+        sessionVersion: 0,
+        ...data,
+      };
+      state.users.push(user);
+      return { ...user };
     },
     async update({
       where,
@@ -363,6 +397,65 @@ const models = {
       return { count: before - state.emailChangeUndos.length };
     },
   },
+  pendingSignup: {
+    async findUnique({ where }: { where: { id: string } }) {
+      const pending = state.pendingSignups.find((row) => row.id === where.id);
+      return pending ? { ...pending } : null;
+    },
+    async upsert({
+      where,
+      create,
+      update,
+    }: {
+      where: { email: string };
+      create: PendingSignupFields;
+      update: Partial<PendingSignupFields>;
+    }) {
+      const existing = state.pendingSignups.find((row) =>
+        sameEmail(row.email, where.email),
+      );
+      if (existing) {
+        Object.assign(existing, update);
+        return { ...existing };
+      }
+      const pending: PendingSignupRow = {
+        id: `pending-${nextId++}`,
+        createdAt: new Date(),
+        ...create,
+      };
+      state.pendingSignups.push(pending);
+      return { ...pending };
+    },
+    async updateMany({
+      where,
+      data,
+    }: {
+      where: { id: string; codeHash: string; attempts: { lt: number } };
+      data: { attempts: { increment: number } };
+    }) {
+      const matches = state.pendingSignups.filter(
+        (row) =>
+          row.id === where.id &&
+          row.codeHash === where.codeHash &&
+          row.attempts < where.attempts.lt,
+      );
+      for (const pending of matches) {
+        pending.attempts += data.attempts.increment;
+      }
+      return { count: matches.length };
+    },
+    async deleteMany({ where }: { where: { id: string; codeHash?: string } }) {
+      const before = state.pendingSignups.length;
+      state.pendingSignups = state.pendingSignups.filter(
+        (row) =>
+          !(
+            row.id === where.id &&
+            (where.codeHash === undefined || row.codeHash === where.codeHash)
+          ),
+      );
+      return { count: before - state.pendingSignups.length };
+    },
+  },
   profile: ownedModel("profiles"),
   income: ownedModel("incomes"),
   expense: ownedModel("expenses"),
@@ -489,5 +582,15 @@ export const fakeDb = {
     return state.emailChangeUndos
       .filter((undo) => undo.userId === userId)
       .map((undo) => ({ ...undo }));
+  },
+  getUserByEmail(email: string) {
+    const user = findUser({ email });
+    return user ? { ...user } : undefined;
+  },
+  countUsers() {
+    return state.users.length;
+  },
+  getPendingSignups() {
+    return state.pendingSignups.map((row) => ({ ...row }));
   },
 };

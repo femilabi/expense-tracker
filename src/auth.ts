@@ -1,11 +1,28 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { after } from "next/server";
 
 import { authConfig } from "@/auth.config";
 import { prisma } from "@/lib/prisma";
 import { LoginFormSchema } from "@/lib/definitions";
+import { sendSignInNotificationEmail } from "@/lib/email";
 import { getSessionVersion, isSessionStale } from "@/lib/session-invalidation";
+
+/** Where a sign-in came from, for the notification email. */
+function describeSignIn(request: Request | undefined) {
+  const forwarded = request?.headers
+    .get("x-forwarded-for")
+    ?.split(",")[0]
+    ?.trim();
+
+  return {
+    signedInAt: new Date(),
+    ip: forwarded && forwarded.length <= 64 ? forwarded : "Unknown",
+    userAgent:
+      request?.headers.get("user-agent")?.slice(0, 200) || "Unknown browser",
+  };
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -15,7 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const parsed = LoginFormSchema.safeParse(credentials);
         if (!parsed.success) {
           return null;
@@ -35,6 +52,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!passwordsMatch) {
           return null;
         }
+
+        const signInDetails = describeSignIn(request);
+        after(async () => {
+          await sendSignInNotificationEmail(
+            user.email,
+            signInDetails,
+            user.name,
+          );
+        });
 
         // The version is read in the same query as the password hash, so a
         // login that checked the old password always gets the old version.

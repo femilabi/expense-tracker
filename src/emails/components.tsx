@@ -68,7 +68,7 @@ export function Button({
 export function LinkFallback({ href }: { href: string }) {
   return (
     <Muted>
-      If the button does not work, copy this link into your browser:
+      If the button doesn&apos;t work, copy this link into your browser:
       <br />
       {href}
     </Muted>

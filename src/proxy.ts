@@ -16,6 +16,6 @@ export function proxy(request: NextAuthRequest, event: NextFetchEvent) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|login|signup|forgot-password|reset-password|confirm-email-change|undo-email-change|.*\\..*).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|login|signup|verify-email|forgot-password|reset-password|confirm-email-change|undo-email-change|.*\\..*).*)",
   ],
 };

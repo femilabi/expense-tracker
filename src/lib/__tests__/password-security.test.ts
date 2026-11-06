@@ -68,6 +68,7 @@ vi.mock("@/lib/email", () => ({
     mocks.resetLinks.push(token);
   },
   sendPasswordChangedEmail: async () => {},
+  sendSignInNotificationEmail: async () => {},
 }));
 
 vi.mock("@/lib/rate-limit", () => ({

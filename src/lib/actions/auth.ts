@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import * as z from "zod";
 
 import { signIn, signOut } from "@/auth";
+import { keepFormValues } from "@/lib/form-values";
 import { prisma } from "@/lib/prisma";
 import {
   LoginFormSchema,
@@ -13,12 +14,27 @@ import {
   type LoginFormState,
   type SignupFormState,
 } from "@/lib/definitions";
+import { issueSignupCode, setPendingSignupCookie } from "@/lib/pending-signup";
+import {
+  checkRateLimit,
+  getClientIp,
+  RATE_LIMIT_MESSAGE,
+} from "@/lib/rate-limit";
 import { getServerSession } from "@/lib/session";
+import { SIGNUP_CODE_EMAIL_LIMIT } from "@/lib/signup-code";
+
+const SIGNUP_IP_LIMIT = 10;
 
 export async function signup(
   _state: SignupFormState,
   formData: FormData,
 ): Promise<SignupFormState> {
+  // Success redirects, so every result that reaches the form is an error.
+  const result = await startSignup(formData);
+  return { ...result, values: keepFormValues(formData, ["name", "email"]) };
+}
+
+async function startSignup(formData: FormData): Promise<SignupFormState> {
   const validatedFields = SignupFormSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -31,6 +47,24 @@ export async function signup(
 
   const { name, email, password } = validatedFields.data;
 
+  const ipLimit = await checkRateLimit({
+    scope: "signup:ip",
+    identifier: await getClientIp(),
+    limit: SIGNUP_IP_LIMIT,
+  });
+  if (ipLimit.limited) {
+    return { message: RATE_LIMIT_MESSAGE };
+  }
+
+  const emailLimit = await checkRateLimit({
+    scope: "signup-code:email",
+    identifier: email.toLowerCase(),
+    limit: SIGNUP_CODE_EMAIL_LIMIT,
+  });
+  if (emailLimit.limited) {
+    return { message: RATE_LIMIT_MESSAGE };
+  }
+
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
     return { message: "An account with this email already exists." };
@@ -38,17 +72,28 @@ export async function signup(
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  await prisma.user.create({
-    data: { name, email, passwordHash },
-  });
+  // The account is only created once the emailed code is confirmed.
+  const pendingId = await issueSignupCode({ email, name, passwordHash });
+  if (!pendingId) {
+    return {
+      message: "We couldn't send the verification email. Please try again.",
+    };
+  }
 
-  redirect("/login?registered=1");
+  await setPendingSignupCookie(pendingId);
+  redirect("/verify-email");
 }
 
 export async function login(
   _state: LoginFormState,
   formData: FormData,
 ): Promise<LoginFormState> {
+  // Success redirects, so every result that reaches the form is an error.
+  const result = await signInWithPassword(formData);
+  return { ...result, values: keepFormValues(formData, ["email"]) };
+}
+
+async function signInWithPassword(formData: FormData): Promise<LoginFormState> {
   const validatedFields = LoginFormSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),

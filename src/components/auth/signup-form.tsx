@@ -29,6 +29,7 @@ export default function SignupForm() {
             type="text"
             autoComplete="name"
             placeholder="Oriyomi Adeosun"
+            defaultValue={state?.values?.name}
             {...inputStyles}
             aria-invalid={state?.errors?.name ? true : undefined}
           />
@@ -45,6 +46,7 @@ export default function SignupForm() {
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
+            defaultValue={state?.values?.email}
             {...inputStyles}
             aria-invalid={state?.errors?.email ? true : undefined}
           />
@@ -94,7 +96,7 @@ export default function SignupForm() {
         <Button
           type="submit"
           loading={pending}
-          loadingText="Creating account…"
+          loadingText="Sending code…"
           mt={1}
           w="full"
           h={11}

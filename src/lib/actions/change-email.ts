@@ -14,6 +14,7 @@ import {
   type EmailChangeTokenState,
 } from "@/lib/definitions";
 import {
+  sendEmailChangeCompletedEmail,
   sendEmailChangedNoticeEmail,
   sendEmailChangeVerificationEmail,
   sendEmailRestoredEmail,
@@ -25,6 +26,7 @@ import {
   getEmailChangeUndoExpiry,
   hashEmailChangeToken,
 } from "@/lib/email-change-token";
+import { keepFormValues } from "@/lib/form-values";
 import { prisma } from "@/lib/prisma";
 import {
   checkRateLimit,
@@ -75,6 +77,17 @@ function isUniqueViolation(error: unknown): boolean {
 
 export async function requestEmailChange(
   _state: ChangeEmailState,
+  formData: FormData,
+): Promise<ChangeEmailState> {
+  const result = await sendEmailChangeLink(formData);
+  // After an error the new email is shown again. After a send it clears.
+  if (result?.tone === "info") {
+    return result;
+  }
+  return { ...result, values: keepFormValues(formData, ["newEmail"]) };
+}
+
+async function sendEmailChangeLink(
   formData: FormData,
 ): Promise<ChangeEmailState> {
   // The account always comes from the session, never the form.
@@ -231,9 +244,10 @@ export async function confirmEmailChange(
   const undoExpiresAt = getEmailChangeUndoExpiry();
   const changedAt = new Date();
 
-  let oldEmail: string;
+  /** The account as it was before the change. */
+  let previous: { email: string; name: string };
   try {
-    oldEmail = await prisma.$transaction(async (tx) => {
+    previous = await prisma.$transaction(async (tx) => {
       // Removing the request claims the link, so it works only once.
       const claimed = await tx.emailChangeRequest.deleteMany({
         where: { id: request.id },
@@ -244,7 +258,7 @@ export async function confirmEmailChange(
 
       const user = await tx.user.findUnique({
         where: { id: request.userId },
-        select: { email: true },
+        select: { email: true, name: true },
       });
       if (!user) {
         throw new Error(ALREADY_USED);
@@ -278,7 +292,7 @@ export async function confirmEmailChange(
         },
       });
 
-      return user.email;
+      return user;
     });
   } catch (error) {
     if (isErrorWithMessage(error, ALREADY_USED)) {
@@ -292,11 +306,13 @@ export async function confirmEmailChange(
 
   after(async () => {
     await sendEmailChangedNoticeEmail(
-      oldEmail,
+      previous.email,
       request.newEmail,
       undoToken,
       formatExpiry(undoExpiresAt),
+      previous.name,
     );
+    await sendEmailChangeCompletedEmail(request.newEmail, previous.name);
   });
 
   // Clears the session cookie on this device too, then redirects.
@@ -350,9 +366,10 @@ export async function undoEmailChange(
   const resetToken = generateResetToken();
   const restoredAt = new Date();
 
-  let replacedEmail: string;
+  /** The account as it was before the undo. */
+  let replaced: { email: string; name: string };
   try {
-    replacedEmail = await prisma.$transaction(async (tx) => {
+    replaced = await prisma.$transaction(async (tx) => {
       // Checked before claiming the link, so it stays usable if this fails.
       const owner = await tx.user.findUnique({
         where: { email: undo.oldEmail },
@@ -372,7 +389,7 @@ export async function undoEmailChange(
 
       const user = await tx.user.findUnique({
         where: { id: undo.userId },
-        select: { email: true },
+        select: { email: true, name: true },
       });
       if (!user) {
         throw new Error(ALREADY_USED);
@@ -403,7 +420,7 @@ export async function undoEmailChange(
         data: { email: undo.oldEmail, sessionVersion: { increment: 1 } },
       });
 
-      return user.email;
+      return user;
     });
   } catch (error) {
     if (
@@ -421,9 +438,14 @@ export async function undoEmailChange(
   after(async () => {
     // Only the restored address gets a reset link, the other one may belong to
     // whoever made the change.
-    await sendEmailRestoredEmail(undo.oldEmail, undo.oldEmail, resetToken);
-    if (replacedEmail.toLowerCase() !== undo.oldEmail.toLowerCase()) {
-      await sendEmailRestoredEmail(replacedEmail, undo.oldEmail);
+    await sendEmailRestoredEmail(
+      undo.oldEmail,
+      undo.oldEmail,
+      resetToken,
+      replaced.name,
+    );
+    if (replaced.email.toLowerCase() !== undo.oldEmail.toLowerCase()) {
+      await sendEmailRestoredEmail(replaced.email, undo.oldEmail);
     }
   });
 

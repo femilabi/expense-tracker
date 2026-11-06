@@ -26,7 +26,7 @@ export function PasswordResetEmail({
     <EmailLayout>
       <Heading>Reset your password</Heading>
       <Paragraph>
-        Hi {firstNameOf(name)}, we received a request to reset the password of
+        Hi {firstNameOf(name)}, we received a request to reset the password for
         your Expense Tracker account.
       </Paragraph>
       <Button href={resetUrl}>Choose a new password</Button>
@@ -37,8 +37,8 @@ export function PasswordResetEmail({
       </Muted>
       <LinkFallback href={resetUrl} />
       <Muted>
-        If you did not request a password reset you can safely ignore this
-        email. Your password will not change.
+        If you didn&apos;t ask to reset your password, you can safely ignore
+        this email. Your password won&apos;t change.
       </Muted>
     </EmailLayout>
   );
@@ -56,13 +56,13 @@ export function passwordResetEmail(
     text: [
       "Reset your Expense Tracker password",
       "",
-      `Hi ${firstName}, we received a request to reset the password of your Expense Tracker account.`,
+      `Hi ${firstName}, we received a request to reset the password for your Expense Tracker account.`,
       "",
       `Open this link to choose a new password: ${input.resetUrl}`,
       "",
       `This link expires in ${input.expiresInMinutes} minutes and can only be used once.`,
       "After you reset your password, you will be signed out on every device.",
-      "If you did not request a password reset you can safely ignore this email. Your password will not change.",
+      "If you didn't ask to reset your password, you can safely ignore this email. Your password won't change.",
     ].join("\n"),
   };
 }

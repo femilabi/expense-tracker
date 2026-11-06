@@ -12,6 +12,7 @@ import {
   type ResetPasswordState,
 } from "@/lib/definitions";
 import { sendPasswordChangedEmail, sendPasswordResetEmail } from "@/lib/email";
+import { keepFormValues } from "@/lib/form-values";
 import { prisma } from "@/lib/prisma";
 import {
   checkRateLimit,
@@ -43,6 +44,15 @@ export async function requestPasswordReset(
   _state: ForgotPasswordState,
   formData: FormData,
 ): Promise<ForgotPasswordState> {
+  const result = await sendResetLink(formData);
+  // After an error the email is shown again. After a send it clears.
+  if (result?.tone === "info") {
+    return result;
+  }
+  return { ...result, values: keepFormValues(formData, ["email"]) };
+}
+
+async function sendResetLink(formData: FormData): Promise<ForgotPasswordState> {
   const validatedFields = ForgotPasswordSchema.safeParse({
     email: formData.get("email"),
   });
@@ -81,7 +91,7 @@ export async function requestPasswordReset(
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, email: true },
+    select: { id: true, email: true, name: true },
   });
 
   if (!user) {
@@ -109,7 +119,7 @@ export async function requestPasswordReset(
   // Send after the response so the email provider's latency is not visible to
   // the caller (and does not leak whether the address exists).
   after(async () => {
-    await sendPasswordResetEmail(user.email, token);
+    await sendPasswordResetEmail(user.email, token, user.name);
   });
 
   return { message: NEUTRAL_MESSAGE, tone: "info" };
@@ -174,7 +184,7 @@ export async function resetPassword(
   const passwordHash = await bcrypt.hash(password, 10);
   const changedAt = new Date();
 
-  let updatedUser: { id: string; email: string };
+  let updatedUser: { id: string; email: string; name: string };
   try {
     updatedUser = await prisma.$transaction(async (tx) => {
       // Claiming the token and updating the password happen in one transaction.
@@ -201,7 +211,7 @@ export async function resetPassword(
           passwordChangedAt: changedAt,
           sessionVersion: { increment: 1 },
         },
-        select: { id: true, email: true },
+        select: { id: true, email: true, name: true },
       });
     });
   } catch {
@@ -214,7 +224,7 @@ export async function resetPassword(
   }
 
   after(async () => {
-    await sendPasswordChangedEmail(updatedUser.email);
+    await sendPasswordChangedEmail(updatedUser.email, updatedUser.name);
   });
 
   redirect("/login?reset=1");

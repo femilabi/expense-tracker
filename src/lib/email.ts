@@ -1,12 +1,31 @@
 import { Resend } from "resend";
 
-const RESET_SUBJECT = "Reset your Expense Tracker password";
-const CONFIRMATION_SUBJECT = "Your Expense Tracker password was changed";
-const ACCOUNT_DELETED_SUBJECT = "Your Expense Tracker account was deleted";
-const EMAIL_CHANGE_VERIFY_SUBJECT = "Confirm your new Expense Tracker email";
-const EMAIL_CHANGED_SUBJECT = "Your Expense Tracker email was changed";
-const EMAIL_RESTORED_SUBJECT = "Your Expense Tracker email was restored";
+import {
+  accountDeletedEmail,
+  emailChangeCompletedEmail,
+  emailChangedEmail,
+  emailChangeVerificationEmail,
+  emailRemovedEmail,
+  emailRestoredEmail,
+  passwordChangedEmail,
+  passwordResetEmail,
+  signInAlertEmail,
+  verificationCodeEmail,
+  welcomeEmail,
+  type EmailTemplate,
+} from "@/emails";
+import {
+  EMAIL_CHANGE_TOKEN_TTL_MS,
+  EMAIL_CHANGE_UNDO_TTL_MS,
+  formatExpiry,
+} from "@/lib/email-change-token";
+import { SIGNUP_CODE_TTL_MS } from "@/lib/signup-code";
+import { describeUserAgent } from "@/lib/user-agent";
+
 const EXPIRY_MINUTES = 15;
+const SIGNUP_CODE_MINUTES = SIGNUP_CODE_TTL_MS / 60_000;
+const EMAIL_CHANGE_MINUTES = EMAIL_CHANGE_TOKEN_TTL_MS / 60_000;
+const UNDO_DAYS = EMAIL_CHANGE_UNDO_TTL_MS / (24 * 60 * 60 * 1000);
 
 function getAppUrl(): string {
   const configured = process.env.APP_URL?.trim();
@@ -36,21 +55,12 @@ export function buildEmailChangeUndoLink(token: string): string {
   return `${getAppUrl()}/undo-email-change?token=${encodeURIComponent(token)}`;
 }
 
-/** Email addresses are user input, so they are escaped before going in HTML. */
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+function buildForgotPasswordLink(): string {
+  return `${getAppUrl()}/forgot-password`;
 }
 
-type EmailInput = {
+type EmailInput = EmailTemplate & {
   to: string;
-  subject: string;
-  html: string;
-  text: string;
   /** Only used for the development fallback, never logged in production. */
   developmentDetails?: string;
 };
@@ -59,6 +69,9 @@ type EmailInput = {
  * Sends an email and reports whether it went out. Failures are logged, never
  * thrown. In development without an API key the details are logged instead,
  * which counts as sent so the flows can be used locally.
+ *
+ * The HTML and text come from the templates in `@/emails`, which escape
+ * everything they're given.
  */
 async function sendEmail({
   to,
@@ -104,91 +117,37 @@ async function sendEmail({
 export async function sendPasswordResetEmail(
   to: string,
   token: string,
+  name: string,
 ): Promise<void> {
   const link = buildPasswordResetLink(token);
 
   await sendEmail({
     to,
-    subject: RESET_SUBJECT,
-    html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #14213d;">
-        <h1 style="font-size: 20px;">Reset your password</h1>
-        <p>We received a request to reset the password of your Expense Tracker account.</p>
-        <p>
-          <a href="${link}" style="background:#0e8388;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;display:inline-block;">
-            Choose a new password
-          </a>
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          This link expires in ${EXPIRY_MINUTES} minutes and can only be used once.
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          If the button does not work, copy this link into your browser:<br />
-          ${link}
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          If you did not request a password reset you can safely ignore this email.
-        </p>
-      </div>
-    `,
-    text: [
-      "Reset your Expense Tracker password",
-      "",
-      "We received a request to reset the password of your Expense Tracker account.",
-      "",
-      `Open this link to choose a new password: ${link}`,
-      "",
-      `This link expires in ${EXPIRY_MINUTES} minutes and can only be used once.`,
-      "If you did not request a password reset you can safely ignore this email.",
-    ].join("\n"),
+    ...passwordResetEmail({
+      name,
+      resetUrl: link,
+      expiresInMinutes: EXPIRY_MINUTES,
+    }),
     developmentDetails: `Password reset link for ${to}: ${link}`,
   });
 }
 
-export async function sendPasswordChangedEmail(to: string): Promise<void> {
+/** Sent after a password change and after a password reset. */
+export async function sendPasswordChangedEmail(
+  to: string,
+  name: string,
+): Promise<void> {
   await sendEmail({
     to,
-    subject: CONFIRMATION_SUBJECT,
-    html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #14213d;">
-        <h1 style="font-size: 20px;">Your password was changed</h1>
-        <p>The password of your Expense Tracker account was just changed.</p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          All other sessions were signed out. If this was not you, reset your password
-          immediately and contact support.
-        </p>
-      </div>
-    `,
-    text: [
-      "Your Expense Tracker password was changed",
-      "",
-      "The password of your account was just changed and all other sessions were signed out.",
-      "If this was not you, reset your password immediately and contact support.",
-    ].join("\n"),
+    ...passwordChangedEmail({ name, resetUrl: buildForgotPasswordLink() }),
   });
 }
 
-export async function sendAccountDeletedEmail(to: string): Promise<void> {
-  await sendEmail({
-    to,
-    subject: ACCOUNT_DELETED_SUBJECT,
-    html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #14213d;">
-        <h1 style="font-size: 20px;">Your account was deleted</h1>
-        <p>Your Expense Tracker account and all of its data were permanently deleted.</p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          You were signed out on every device. If this was not you, contact support
-          immediately.
-        </p>
-      </div>
-    `,
-    text: [
-      "Your Expense Tracker account was deleted",
-      "",
-      "Your account and all of its data were permanently deleted and you were signed out on every device.",
-      "If this was not you, contact support immediately.",
-    ].join("\n"),
-  });
+export async function sendAccountDeletedEmail(
+  to: string,
+  name: string,
+): Promise<void> {
+  await sendEmail({ to, ...accountDeletedEmail({ name }) });
 }
 
 /** Sent to the new address. Returns whether the email went out. */
@@ -200,38 +159,11 @@ export async function sendEmailChangeVerificationEmail(
 
   return sendEmail({
     to,
-    subject: EMAIL_CHANGE_VERIFY_SUBJECT,
-    html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #14213d;">
-        <h1 style="font-size: 20px;">Confirm your new email</h1>
-        <p>Someone asked to use this address for an Expense Tracker account.</p>
-        <p>
-          <a href="${link}" style="background:#0e8388;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;display:inline-block;">
-            Confirm new email
-          </a>
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          This link expires in 1 hour and can only be used once.
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          If the button does not work, copy this link into your browser:<br />
-          ${link}
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          If you did not ask for this you can safely ignore this email.
-        </p>
-      </div>
-    `,
-    text: [
-      "Confirm your new Expense Tracker email",
-      "",
-      "Someone asked to use this address for an Expense Tracker account.",
-      "",
-      `Open this link to confirm: ${link}`,
-      "",
-      "This link expires in 1 hour and can only be used once.",
-      "If you did not ask for this you can safely ignore this email.",
-    ].join("\n"),
+    ...emailChangeVerificationEmail({
+      newEmail: to,
+      confirmUrl: link,
+      expiresInMinutes: EMAIL_CHANGE_MINUTES,
+    }),
     developmentDetails: `Email change link for ${to}: ${link}`,
   });
 }
@@ -242,98 +174,115 @@ export async function sendEmailChangedNoticeEmail(
   newEmail: string,
   undoToken: string,
   undoExpiresAt: string,
+  name: string,
 ): Promise<void> {
   const link = buildEmailChangeUndoLink(undoToken);
-  const safeNewEmail = escapeHtml(newEmail);
 
   await sendEmail({
     to,
-    subject: EMAIL_CHANGED_SUBJECT,
-    html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #14213d;">
-        <h1 style="font-size: 20px;">Your email was changed</h1>
-        <p>The email of your Expense Tracker account was changed to ${safeNewEmail}.
-          All sessions were signed out.</p>
-        <p>If this was not you, undo the change:</p>
-        <p>
-          <a href="${link}" style="background:#0e8388;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;display:inline-block;">
-            Undo email change
-          </a>
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          This link works once and expires on ${undoExpiresAt}.
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          If the button does not work, copy this link into your browser:<br />
-          ${link}
-        </p>
-      </div>
-    `,
-    text: [
-      "Your Expense Tracker email was changed",
-      "",
-      `The email of your account was changed to ${newEmail} and all sessions were signed out.`,
-      "",
-      `If this was not you, undo the change: ${link}`,
-      "",
-      `This link works once and expires on ${undoExpiresAt}.`,
-    ].join("\n"),
+    ...emailChangedEmail({
+      name,
+      newEmail,
+      undoUrl: link,
+      undoExpiresInDays: UNDO_DAYS,
+      undoExpiresAt,
+    }),
     developmentDetails: `Email change undo link for ${to}: ${link}`,
   });
 }
 
 /**
  * Sent to both addresses after an undo. Only the restored address gets a
- * reset link, the other one may belong to whoever made the change.
+ * reset link, the other one may belong to whoever made the change, so it
+ * gets a separate message saying it was removed.
  */
 export async function sendEmailRestoredEmail(
   to: string,
   restoredEmail: string,
   resetToken?: string,
+  name = "",
 ): Promise<void> {
-  const resetLink = resetToken ? buildPasswordResetLink(resetToken) : null;
-  const forgotLink = `${getAppUrl()}/forgot-password`;
-  const safeRestoredEmail = escapeHtml(restoredEmail);
+  if (!resetToken) {
+    await sendEmail({ to, ...emailRemovedEmail() });
+    return;
+  }
+
+  const resetLink = buildPasswordResetLink(resetToken);
 
   await sendEmail({
     to,
-    subject: EMAIL_RESTORED_SUBJECT,
-    html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #14213d;">
-        <h1 style="font-size: 20px;">Your email was restored</h1>
-        <p>The email of your Expense Tracker account was changed back to
-          ${safeRestoredEmail} and all sessions were signed out.</p>
-        <p>We recommend resetting your password now.</p>
-        ${
-          resetLink
-            ? `<p>
-          <a href="${resetLink}" style="background:#0e8388;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;display:inline-block;">
-            Reset password
-          </a>
-        </p>
-        <p style="color:#5b6b7f;font-size: 14px;">
-          This link expires in ${EXPIRY_MINUTES} minutes. After that, request a new one at
-          ${forgotLink}
-        </p>`
-            : ""
-        }
-      </div>
-    `,
-    text: [
-      "Your Expense Tracker email was restored",
-      "",
-      `The email of your account was changed back to ${restoredEmail} and all sessions were signed out.`,
-      "We recommend resetting your password now.",
-      ...(resetLink
-        ? [
-            "",
-            `Reset your password: ${resetLink}`,
-            `This link expires in ${EXPIRY_MINUTES} minutes. After that, request a new one at ${forgotLink}`,
-          ]
-        : []),
-    ].join("\n"),
-    developmentDetails: resetLink
-      ? `Password reset link for ${to}: ${resetLink}`
-      : undefined,
+    ...emailRestoredEmail({
+      name,
+      restoredEmail,
+      resetUrl: resetLink,
+      resetExpiresInMinutes: EXPIRY_MINUTES,
+      forgotPasswordUrl: buildForgotPasswordLink(),
+    }),
+    developmentDetails: `Password reset link for ${to}: ${resetLink}`,
+  });
+}
+
+/** Sent to the new address once the change is confirmed. */
+export async function sendEmailChangeCompletedEmail(
+  to: string,
+  name: string,
+): Promise<void> {
+  await sendEmail({
+    to,
+    ...emailChangeCompletedEmail({
+      name,
+      newEmail: to,
+      undoExpiresInDays: UNDO_DAYS,
+    }),
+  });
+}
+
+/** Sent before the account exists. Returns whether the email went out. */
+export async function sendSignupCodeEmail(
+  to: string,
+  code: string,
+  name: string,
+): Promise<boolean> {
+  return sendEmail({
+    to,
+    ...verificationCodeEmail({
+      name,
+      code,
+      expiresInMinutes: SIGNUP_CODE_MINUTES,
+    }),
+    developmentDetails: `Signup code for ${to}: ${code}`,
+  });
+}
+
+export async function sendWelcomeEmail(
+  to: string,
+  name: string,
+): Promise<void> {
+  await sendEmail({
+    to,
+    ...welcomeEmail({ name, dashboardUrl: `${getAppUrl()}/dashboard` }),
+  });
+}
+
+export type SignInDetails = {
+  signedInAt: Date;
+  ip: string;
+  userAgent: string;
+};
+
+export async function sendSignInNotificationEmail(
+  to: string,
+  { signedInAt, ip, userAgent }: SignInDetails,
+  name: string,
+): Promise<void> {
+  await sendEmail({
+    to,
+    ...signInAlertEmail({
+      name,
+      signedInAt: formatExpiry(signedInAt),
+      device: describeUserAgent(userAgent),
+      ipAddress: ip,
+      resetUrl: buildForgotPasswordLink(),
+    }),
   });
 }

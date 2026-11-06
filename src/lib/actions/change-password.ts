@@ -51,7 +51,7 @@ export async function changePassword(
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true, passwordHash: true },
+    select: { email: true, name: true, passwordHash: true },
   });
 
   if (!user?.passwordHash) {
@@ -95,7 +95,7 @@ export async function changePassword(
   }
 
   after(async () => {
-    await sendPasswordChangedEmail(user.email);
+    await sendPasswordChangedEmail(user.email, user.name);
   });
 
   // Clears the session cookie on this device too, then redirects.

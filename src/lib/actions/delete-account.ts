@@ -50,7 +50,7 @@ export async function deleteAccount(
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true, passwordHash: true },
+    select: { email: true, name: true, passwordHash: true },
   });
 
   if (!user?.passwordHash) {
@@ -84,7 +84,7 @@ export async function deleteAccount(
   }
 
   after(async () => {
-    await sendAccountDeletedEmail(user.email);
+    await sendAccountDeletedEmail(user.email, user.name);
   });
 
   // Clears the session cookie on this device too, then redirects.

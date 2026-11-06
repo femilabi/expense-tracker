@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => {
       restoredEmail: string;
       resetToken?: string;
     }[],
+    completedEmails: [] as string[],
   };
 });
 
@@ -101,6 +102,10 @@ vi.mock("@/lib/email", () => ({
   ) => {
     mocks.restoredEmails.push({ to, restoredEmail, resetToken });
   },
+  sendEmailChangeCompletedEmail: async (to: string) => {
+    mocks.completedEmails.push(to);
+  },
+  sendSignInNotificationEmail: async () => {},
 }));
 
 vi.mock("@/lib/rate-limit", () => ({
@@ -221,6 +226,7 @@ beforeEach(async () => {
   mocks.verificationEmails = [];
   mocks.changedNotices = [];
   mocks.restoredEmails = [];
+  mocks.completedEmails = [];
 
   const passwordHash = await bcrypt.hash(PASSWORD, 4);
   emailCounter++;
@@ -236,8 +242,11 @@ afterEach(() => {
 
 describe("requesting an email change", () => {
   it("rejects a wrong password", async () => {
+    // The new email comes back so the form can show it again, the password
+    // never does.
     expect(await requestChange("new@example.com", "WrongPass9!")).toEqual({
       errors: { currentPassword: ["Current password is incorrect."] },
+      values: { newEmail: "new@example.com" },
     });
 
     expect(fakeDb.getEmailChangeRequest(userId)).toBeUndefined();
@@ -247,6 +256,8 @@ describe("requesting an email change", () => {
   it("rejects an email that is already in use, whatever its case", async () => {
     expect(await requestChange(`  ${otherEmail.toUpperCase()} `)).toEqual({
       errors: { newEmail: ["An account with this email already exists."] },
+      // Shown again exactly as typed.
+      values: { newEmail: `  ${otherEmail.toUpperCase()} ` },
     });
 
     expect(fakeDb.getEmailChangeRequest(userId)).toBeUndefined();
@@ -259,6 +270,7 @@ describe("requesting an email change", () => {
     expect(await requestChange("new@example.com")).toEqual({
       message: "We couldn't send the confirmation email. Please try again.",
       tone: "error",
+      values: { newEmail: "new@example.com" },
     });
 
     expect(fakeDb.getEmailChangeRequest(userId)).toBeUndefined();
@@ -373,6 +385,7 @@ describe("confirming an email change", () => {
         undoExpiresAt: "Thu, 5 Nov 2026, 12:00 UTC",
       },
     ]);
+    expect(mocks.completedEmails).toEqual(["new@example.com"]);
     expect(fakeDb.getEmailChangeUndos(userId)).toMatchObject([
       {
         oldEmail: email,

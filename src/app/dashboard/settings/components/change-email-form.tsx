@@ -49,6 +49,7 @@ export default function ChangeEmailForm() {
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
+            defaultValue={state?.values?.newEmail}
             {...inputStyles}
             aria-invalid={state?.errors?.newEmail ? true : undefined}
           />
