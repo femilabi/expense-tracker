@@ -27,7 +27,8 @@ export function WelcomeEmail({ name, dashboardUrl }: WelcomeEmailInput) {
     <EmailLayout>
       <Heading>Welcome, {firstNameOf(name)}!</Heading>
       <Paragraph>
-        Thanks for signing in to Expense Tracker. Here is how to get started:
+        Thanks for signing in to Expense Tracker. Here is how to get started to
+        the expenses:
       </Paragraph>
       <ul style={{ paddingLeft: 20, lineHeight: 1.6 }}>
         {steps.map(([title, rest]) => (
