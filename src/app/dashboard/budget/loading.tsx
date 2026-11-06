@@ -1,0 +1,45 @@
+import { Box, Flex, Skeleton, Stack } from "@chakra-ui/react";
+
+import { COLORS } from "@/components/shared/colors";
+
+export default function Loading() {
+  return (
+    <Box
+      bg={COLORS.page}
+      color={COLORS.text}
+      fontFamily="var(--font-geist-sans), Arial, Helvetica, sans-serif"
+      px={{ base: 4, md: 6 }}
+      py={{ base: 4, md: 6 }}
+    >
+      <Stack w="full" gap={6}>
+        <Flex
+          direction={{ base: "column", sm: "row" }}
+          justify="space-between"
+          align={{ base: "stretch", sm: "flex-start" }}
+          gap={4}
+        >
+          <Box>
+            <Skeleton h="8" w="32" bg={COLORS.border} />
+            <Skeleton mt={3} h="4" w="72" maxW="full" bg={COLORS.border} />
+          </Box>
+          <Skeleton h="10" w="32" borderRadius="lg" bg={COLORS.border} />
+        </Flex>
+
+        <Stack gap={4}>
+          <Skeleton
+            h={{ base: "64", xl: "28" }}
+            borderRadius="xl"
+            bg={COLORS.border}
+          />
+          <Skeleton
+            h="10"
+            w={{ base: "full", sm: "56" }}
+            borderRadius="lg"
+            bg={COLORS.border}
+          />
+          <Skeleton h="80" borderRadius="xl" bg={COLORS.border} />
+        </Stack>
+      </Stack>
+    </Box>
+  );
+}
