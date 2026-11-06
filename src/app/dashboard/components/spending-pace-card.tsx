@@ -27,14 +27,14 @@ import {
   type SpendingStatus,
 } from "@/lib/spending-pace";
 
-import { AnimatedNumber } from "@/components/shared/animated-number";
 import { CSS_COLORS, cssTint } from "@/components/shared/colors";
 import { TrendUpIcon } from "@/components/shared/icons";
 import { glassPillStyles } from "@/components/shared/styles";
-import { usePrefersReducedMotion } from "@/components/shared/use-prefers-reduced-motion";
 
+import { AnimatedNumber } from "./animated-number";
 import { DashboardCard, DashboardCardHeader } from "./dashboard-card";
 import { EmptyState } from "./empty-state";
+import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
 
 export interface SpendingPaceLabels {
   /** Short month names, e.g. "Nov" and "Oct". */

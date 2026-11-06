@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
 
-import { CURRENCY_CODES } from "@/app/expenses/expense-form/constants/currencies";
+import { CURRENCY_CODES } from "@/app/dashboard/expenses/expense-form/constants/currencies";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 

@@ -7,11 +7,11 @@ import { Box, Button, Stack, Text } from "@chakra-ui/react";
 import { rankByPercentUsed } from "@/lib/budget-math";
 import type { BudgetMonth } from "@/lib/budgets";
 
-import { BudgetCategoryProgress } from "@/components/budget/budget-category-progress";
 import { COLORS } from "@/components/shared/colors";
 import { PieChartIcon } from "@/components/shared/icons";
 import { focusRing, secondaryButtonStyles } from "@/components/shared/styles";
 
+import { BudgetCategoryProgress } from "./budget/budget-category-progress";
 import { BudgetBreakdownDialog } from "./budget-breakdown-dialog";
 import { DashboardCard, DashboardCardHeader } from "./dashboard-card";
 import { EmptyState } from "./empty-state";
@@ -78,7 +78,7 @@ export function SpendingCategoriesCard({
               _hover={{ textDecoration: "underline" }}
               _focusVisible={focusRing}
             >
-              <Link href="/budget">Set up budgets</Link>
+              <Link href="/dashboard/budget">Set up budgets</Link>
             </Text>
           </EmptyState>
         )}

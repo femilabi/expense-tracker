@@ -14,7 +14,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 
-import { CURRENCY_OPTIONS } from "@/app/expenses/expense-form/constants/currencies";
+import { CURRENCY_OPTIONS } from "@/app/dashboard/expenses/expense-form/constants/currencies";
 import { PencilIcon, PlusIcon } from "@/components/shared/icons";
 import {
   controlStyles,

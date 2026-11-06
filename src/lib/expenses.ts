@@ -1,9 +1,9 @@
 import {
   isCurrency,
   type Currency,
-} from "@/app/expenses/expense-form/constants/currencies";
-import type { ExpenseRecord } from "@/app/expenses/types";
-import { toUtcDateKey } from "@/app/expenses/utils";
+} from "@/app/dashboard/expenses/expense-form/constants/currencies";
+import type { ExpenseRecord } from "@/app/dashboard/expenses/types";
+import { toUtcDateKey } from "@/app/dashboard/expenses/utils";
 import { prisma } from "@/lib/prisma";
 
 const EXPENSE_SELECT = {

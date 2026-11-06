@@ -2,8 +2,11 @@ import {
   parseDateKey,
   summarizeExpenses,
   toLocalDateKey,
-} from "@/app/expenses/utils";
-import { parseIncomeDateKey, summarizeIncomes } from "@/app/income/utils";
+} from "@/app/dashboard/expenses/utils";
+import {
+  parseIncomeDateKey,
+  summarizeIncomes,
+} from "@/app/dashboard/income/utils";
 import { CATEGORY_BY_VALUE, type Category } from "@/lib/categories";
 import { resolveCurrency, toExpenseRecord } from "@/lib/expenses";
 import { formatShortMonth } from "@/lib/format";

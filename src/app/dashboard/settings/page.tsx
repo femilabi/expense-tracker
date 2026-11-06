@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Box, Flex, Heading, Stack, Text } from "@chakra-ui/react";
 
-import ChangeEmailForm from "@/components/auth/change-email-form";
-import ChangePasswordForm from "@/components/auth/change-password-form";
-import DeleteAccountForm from "@/components/auth/delete-account-form";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+
+import ChangeEmailForm from "./components/change-email-form";
+import ChangePasswordForm from "./components/change-password-form";
+import DeleteAccountForm from "./components/delete-account-form";
 
 export const metadata: Metadata = {
   title: "Settings · Expense Tracker",
@@ -48,7 +49,7 @@ export default async function SettingsPage() {
   const { email, pendingChange } = await getEmailSettings(id);
 
   return (
-    <Stack gap={6} maxW="5xl" mx="auto">
+    <Stack gap={6} w="full" px={{ base: 4, md: 6 }} py={{ base: 4, md: 6 }}>
       <Stack gap={1}>
         <Heading as="h1" size="2xl" color="brand.navy">
           Settings
