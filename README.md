@@ -1,54 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Expense Tracker
 
-## Getting Started
+A personal finance app for recording income and expenses, setting monthly category budgets, and reviewing spending trends.
 
-First, run the development server:
+## Features
 
-```bash
-pnpm dev
-```
+- Monthly dashboard with income, expenses, savings, recent transactions, and spending pace
+- Record and review income and expenses
+- Set monthly budgets by spending category
+- Account signup with email verification, password reset, and email-change confirmation
+- User profiles with currency preferences and avatar uploads
+- Automated tests for finance calculations and account workflows
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Next.js App Router, React, and TypeScript
+- Chakra UI and Recharts
+- Prisma with MySQL-compatible MariaDB
+- NextAuth for authentication
+- Vitest for tests
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Requirements
 
-## Prisma and MySQL
+- Node.js compatible with the versions required by the installed Next.js release
+- pnpm (the package manager pinned in `package.json`)
+- A MySQL-compatible database (MySQL or MariaDB)
+- A Resend account for production email delivery
+- Cloudinary credentials for profile photo uploads
 
-Before running the app or Prisma commands, copy `.env.example` to `.env` and set `DATABASE_URL` to your MySQL connection string. Keep `.env` local and do not commit database credentials. The development and build scripts generate Prisma Client automatically.
+## Getting started
 
-Generate Prisma Client after changing `prisma/schema.prisma`:
+1. Clone the repository and install dependencies:
 
-```bash
-pnpm db:generate
-```
+   ```bash
+   git clone https://github.com/femilabi/expense-tracker.git
+   cd expense-tracker
+   pnpm install
+   ```
 
-After adding models to the schema and configuring a reachable development database, create and apply a migration:
+2. Copy `.env.example` to `.env` and set the values for your environment. At minimum, configure `DATABASE_URL` and `AUTH_SECRET`. Set `APP_URL` to the app's public URL. For production, configure `RESEND_API_KEY` and `RESEND_FROM`; configure the Cloudinary variables to enable avatar uploads.
 
-```bash
-pnpm db:migrate:dev
-```
+   PowerShell:
 
-Deployments can apply committed migrations explicitly with:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-```bash
-pnpm db:migrate:deploy
-```
+   macOS/Linux:
 
-The build and start scripts do not apply migrations automatically.
+   ```bash
+   cp .env.example .env
+   ```
 
-## Learn More
+3. Generate the Prisma client and apply the development migrations:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   pnpm db:generate
+   pnpm db:migrate:dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. Start the development server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   pnpm dev
+   ```
 
-## Deploy on Vercel
+   Open [http://localhost:3000](http://localhost:3000).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+In development, if email delivery is not configured, signup codes and email links are written to the server terminal. Production email delivery requires a configured Resend sender.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Useful commands
+
+| Command | Description |
+| --- | --- |
+| `pnpm dev` | Generate Prisma client and start the development server |
+| `pnpm lint` | Run ESLint |
+| `pnpm test` | Run the Vitest suite |
+| `pnpm ci-build` | Generate Prisma client and build the app |
+| `pnpm db:generate` | Generate Prisma client after schema changes |
+| `pnpm db:migrate:dev` | Create and apply a development migration |
+| `pnpm db:migrate:deploy` | Apply committed migrations |
+| `pnpm db:studio` | Open Prisma Studio |
+
+`pnpm build` and `pnpm start` apply committed database migrations. Ensure the configured database is reachable before using them.
+
+## Project layout
+
+- `src/app/` — Pages, layouts, and API routes
+- `src/components/` — Shared and feature-specific UI
+- `src/lib/` — Data access, finance calculations, and shared utilities
+- `src/emails/` — Account and notification email templates
+- `prisma/` — Database schema and migrations
+
+## Configuration
+
+See [`.env.example`](.env.example) for the required environment variable names and setup notes. Keep your real `.env` file and credentials private; do not commit them.
